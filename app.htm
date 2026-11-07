@@ -1,0 +1,910 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#16131d">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Lamp">
+<title>Lamp</title>
+<link rel="icon" type="image/png" href="icon.png">
+<link rel="apple-touch-icon" href="icon.png">
+<style>
+:root{
+  --sq:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 100' preserveAspectRatio='none'%3E%3Cpath d='M153.50 0.00 L166.19 0.05 L171.13 0.19 L174.85 0.43 L177.93 0.76 L180.59 1.19 L182.93 1.72 L185.03 2.35 L186.93 3.08 L188.65 3.91 L190.21 4.85 L191.63 5.91 L192.93 7.07 L194.09 8.37 L195.15 9.79 L196.09 11.35 L196.92 13.07 L197.65 14.97 L198.28 17.07 L198.81 19.41 L199.24 22.07 L199.57 25.15 L199.81 28.87 L199.95 33.81 L200.00 46.50 L200.00 53.50 L199.95 66.19 L199.81 71.13 L199.57 74.85 L199.24 77.93 L198.81 80.59 L198.28 82.93 L197.65 85.03 L196.92 86.93 L196.09 88.65 L195.15 90.21 L194.09 91.63 L192.93 92.93 L191.63 94.09 L190.21 95.15 L188.65 96.09 L186.93 96.92 L185.03 97.65 L182.93 98.28 L180.59 98.81 L177.93 99.24 L174.85 99.57 L171.13 99.81 L166.19 99.95 L153.50 100.00 L46.50 100.00 L33.81 99.95 L28.87 99.81 L25.15 99.57 L22.07 99.24 L19.41 98.81 L17.07 98.28 L14.97 97.65 L13.07 96.92 L11.35 96.09 L9.79 95.15 L8.37 94.09 L7.07 92.93 L5.91 91.63 L4.85 90.21 L3.91 88.65 L3.08 86.93 L2.35 85.03 L1.72 82.93 L1.19 80.59 L0.76 77.93 L0.43 74.85 L0.19 71.13 L0.05 66.19 L0.00 53.50 L0.00 46.50 L0.05 33.81 L0.19 28.87 L0.43 25.15 L0.76 22.07 L1.19 19.41 L1.72 17.07 L2.35 14.97 L3.08 13.07 L3.91 11.35 L4.85 9.79 L5.91 8.37 L7.07 7.07 L8.37 5.91 L9.79 4.85 L11.35 3.91 L13.07 3.08 L14.97 2.35 L17.07 1.72 L19.41 1.19 L22.07 0.76 L25.15 0.43 L28.87 0.19 L33.81 0.05 L46.50 0.00Z'/%3E%3C/svg%3E");   /* iOS-style continuous corners, 2:1 */
+  --ink:#16131d;        /* the dark room */
+  --panel:#211d2a;      /* raised surfaces */
+  --panel-2:#2a2535;
+  --line:rgba(255,255,255,.08);
+  --text:#f3eff7;
+  --muted:#9c95aa;
+  --danger:#ff8a7a;
+  --lamp:255,170,60;    /* live lamp colour, set from JS */
+  --glow:0;             /* 0..1, how much the lamp lights the room */
+  --r-lg:28px; --r-md:18px; --r-sm:12px;
+  font-family:ui-rounded,"SF Pro Rounded","Nunito","Segoe UI Variable Display","Segoe UI",system-ui,sans-serif;
+  color-scheme:dark;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:var(--ink);color:var(--text)}
+body{
+  min-height:100dvh;
+  font-size:16px;line-height:1.4;
+}
+button,input{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid rgba(var(--lamp),.95);outline-offset:3px}
+.orb:focus-visible{outline-offset:6px}
+.app{max-width:460px;margin:0 auto;padding:calc(env(safe-area-inset-top,0px) + 16px) 18px calc(28px + env(safe-area-inset-bottom,0px))}
+/* opened from the Home Screen: give the pills clear room below the status bar */
+@media (display-mode:standalone){.app{padding-top:calc(env(safe-area-inset-top,0px) + 26px)}}
+.standalone .app{padding-top:calc(env(safe-area-inset-top,0px) + 26px)}
+/* keep scrolled content from sliding under the status bar */
+body::after{content:"";position:fixed;left:0;right:0;top:0;height:env(safe-area-inset-top,0px);background:var(--ink);z-index:40;pointer-events:none}
+
+/* top bar */
+.top{position:relative;z-index:20}
+.pills{overflow-x:auto;scrollbar-width:none;margin:0 -18px;padding:2px 18px}
+.pills-in{display:flex;gap:8px;width:max-content;margin:0 auto}
+.pills::-webkit-scrollbar{display:none}
+.pill{flex:none;display:inline-flex;align-items:center;gap:7px;height:32px;padding:0 13px 0 11px;border:0;border-radius:16px;font-size:13.5px;font-weight:600;color:var(--muted);background:var(--panel);box-shadow:0 0 0 1px var(--line) inset;white-space:nowrap}
+button.pill{color:var(--text)}
+.pill[aria-expanded="true"]{background:var(--panel-2)}
+.pill.on{color:rgb(var(--lamp));color:color-mix(in srgb, rgb(var(--lamp)) 55%, #fff);box-shadow:0 0 0 1.5px rgba(var(--lamp),.6) inset;font-variant-numeric:tabular-nums}
+.pdot{width:14px;height:14px;border-radius:50%;flex:none;box-shadow:0 0 0 1px rgba(255,255,255,.2) inset}
+.pdot.multi{background:conic-gradient(#ff5e5e,#ffd25e,#6dff8a,#5ee6ff,#6b7bff,#e05eff,#ff5e5e)}
+.pill .pm{color:var(--muted);font-weight:500}
+.pop{position:absolute;left:0;right:0;top:44px;background:#252130;border-radius:20px;padding:14px;box-shadow:0 0 0 1px var(--line) inset,0 20px 40px rgba(0,0,0,.55)}
+.pop .opts{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin-top:12px}
+.pop .opts .btn{padding:10px 0}
+.pop .opts .btn[aria-pressed="true"]{background:rgb(var(--lamp));color:#1a1520}
+.link{border:0;background:none;padding:0;font-size:14px;font-weight:600;color:rgb(var(--lamp))}
+.dot{width:8px;height:8px;border-radius:50%;background:#6b6577}
+.conn.ok .dot{background:#7be0a2;box-shadow:0 0 10px #7be0a288}
+.conn.bad .dot{background:var(--danger)}
+
+/* the orb */
+.stage{display:grid;place-items:center;padding:22px 0 10px}
+.orb{
+  --leds:conic-gradient(rgb(var(--lamp)),rgb(var(--lamp)));
+  position:relative;width:min(62vw,236px);aspect-ratio:1;border-radius:50%;border:0;padding:0;
+  background:#1d1a25;
+  box-shadow:
+    0 0 0 1px rgba(255,255,255,.06) inset,
+    0 0 calc(34px*var(--glow)) calc(2px*var(--glow)) rgba(var(--lamp),calc(.42*var(--glow))),
+    0 30px 60px -30px #000;
+  transition:box-shadow .5s ease, transform .2s ease;
+}
+.orb:active{transform:scale(.97)}
+.core{
+  position:absolute;inset:0;border-radius:50%;overflow:hidden;isolation:isolate;
+  clip-path:circle(50% at 50% 50%);-webkit-mask-image:-webkit-radial-gradient(white,black);
+}
+.core::before{ /* LED light, blurred into a glowing body */
+  content:"";position:absolute;inset:-18%;border-radius:50%;
+  background:var(--leds);
+  filter:blur(26px) saturate(1.25);
+  opacity:calc(.25 + .75*var(--glow));
+  transition:opacity .5s ease;
+}
+.core::after{ /* frosted glass + highlight */
+  content:"";position:absolute;inset:0;border-radius:50%;
+  background:
+    radial-gradient(60% 45% at 35% 25%, rgba(255,255,255,.38), transparent 60%),
+    radial-gradient(100% 100% at 50% 50%, transparent 55%, rgba(0,0,0,.35) 100%);
+  mix-blend-mode:screen;
+}
+.orb.off .core::before{opacity:.06;filter:blur(30px) saturate(.2)}
+.orb-label{
+  position:absolute;inset:0;z-index:2;display:grid;place-items:center;
+  color:rgba(255,255,255,.9);filter:drop-shadow(0 1px 5px rgba(0,0,0,.35));transition:color .3s,filter .3s;
+}
+.orb.off .orb-label{color:rgba(243,239,247,.62);filter:none}
+
+/* brightness */
+.bri{margin:18px 0 6px}
+.bri-cap{margin-top:10px;text-align:center;font-size:15px;font-weight:600;font-variant-numeric:tabular-nums}
+.row{display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin-bottom:10px}
+.label{font-size:15px;font-weight:600}
+.value{font-size:15px;color:var(--muted);font-variant-numeric:tabular-nums}
+/* slider: --pad gap around the knob, --kw knob width; the colour fill always reaches past the knob */
+.slider{--k:.5;--pad:5px;--kw:31px;--h:50px;position:relative;height:var(--h)}
+.slider.thin{--pad:4px;--kw:23px;--h:34px}
+.range{
+  -webkit-appearance:none;appearance:none;display:block;width:100%;height:var(--h);margin:0;padding:0 var(--pad);
+  background:
+    linear-gradient(90deg, rgba(var(--lamp),var(--fill,.9)) 0 calc(var(--pad)*2 + var(--kw) + (100% - var(--pad)*2 - var(--kw))*var(--k)), transparent 0),
+    var(--panel-2);
+  outline:none;touch-action:pan-y;
+}
+/* the native thumb stays (dragging, keyboard) but is invisible; .knob draws it */
+.range::-webkit-slider-thumb{-webkit-appearance:none;width:var(--kw);height:calc(var(--h) - var(--pad)*2);opacity:0}
+.range::-moz-range-thumb{width:var(--kw);height:calc(var(--h) - var(--pad)*2);border:0;opacity:0}
+.knob{position:absolute;top:var(--pad);bottom:var(--pad);width:var(--kw);pointer-events:none;background:#fff;
+  left:calc(var(--pad) + (100% - var(--pad)*2 - var(--kw))*var(--k))}
+.slider:has(.range:focus-visible) .knob{background:#fff;outline:none}
+.slider:has(.range:focus-visible){outline:2px solid rgba(var(--lamp),.95);outline-offset:3px}
+.range::-moz-range-track{background:transparent}
+.range:disabled{opacity:.45}
+body.is-off{--fill:.28}
+body.is-off .fx[aria-pressed="true"],body.is-off .btn.primary{filter:saturate(.35) brightness(.8)}
+
+/* tabs */
+.tabs{
+  position:sticky;top:env(safe-area-inset-top,0px);z-index:5;margin:22px -18px 16px;padding:10px 18px;
+  background:linear-gradient(var(--ink) 70%, transparent);
+}
+.seg{display:grid;grid-template-columns:repeat(2,1fr);background:var(--panel);border-radius:16px;padding:4px;box-shadow:0 0 0 1px var(--line) inset}
+.seg button{border:0;background:transparent;padding:10px 6px;border-radius:12px;font-size:15px;font-weight:600;color:var(--muted);transition:background .2s,color .2s}
+.seg .md{display:inline-block;width:8px;height:8px;border-radius:50%;margin-left:8px;vertical-align:middle;background:rgb(var(--lamp));box-shadow:0 0 10px rgb(var(--lamp));opacity:0;transform:scale(.3);transition:opacity .25s,transform .25s}
+.seg button.mode .md{opacity:1;transform:none}
+body.is-off .seg button.mode .md{opacity:.35;box-shadow:none}
+.seg button[aria-selected="true"]{background:var(--panel-2);color:var(--text);box-shadow:0 1px 0 rgba(255,255,255,.06) inset}
+[hidden]{display:none!important}
+
+/* colour */
+.wheel-wrap{position:relative;width:min(78vw,300px);aspect-ratio:1;margin:6px auto 18px;touch-action:none}
+.wheel-wrap canvas{width:100%;height:100%;border-radius:50%;display:block}
+.thumb{position:absolute;width:34px;height:34px;margin:-17px 0 0 -17px;border-radius:50%;border:3px solid #fff;box-shadow:0 2px 10px rgba(0,0,0,.6);pointer-events:none;background:rgb(var(--pick,255,255,255))}
+.chips{display:flex;flex-wrap:wrap;gap:10px}
+.swatch{width:46px;height:46px;border-radius:50%;border:0;box-shadow:0 0 0 1px rgba(255,255,255,.12) inset}
+.swatch[aria-pressed="true"]{box-shadow:0 0 0 3px var(--ink),0 0 0 5px #fff}
+.stage{padding-top:26px}
+.chips{align-items:center}
+.fxchip{display:inline-flex;align-items:center;gap:7px;height:46px;padding:0 16px 0 13px;border:0;border-radius:23px;font-size:14px;font-weight:600;background:var(--panel);box-shadow:0 0 0 1px rgba(255,255,255,.14) inset}
+.fxchip .spark{font-size:13px;color:rgb(var(--lamp))}
+.fxchip[aria-pressed="true"]{background:rgba(var(--lamp),.2);box-shadow:0 0 0 1.5px rgba(var(--lamp),.9) inset}
+.tiles{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.tw{position:relative;isolation:isolate;transition:filter .2s}
+.tw .ring{position:absolute;inset:0;width:100%;height:100%;overflow:visible;pointer-events:none;z-index:-1;opacity:0;transition:opacity .15s}
+.tw:has(> .tile[aria-pressed="true"]) .ring{opacity:1}
+.tw:has(> .tile[aria-pressed="true"]){filter:drop-shadow(0 0 8px rgba(var(--c),.75)) drop-shadow(0 0 24px rgba(var(--c),.45))}
+.tile{position:relative;width:100%;aspect-ratio:2/1;border:0;border-radius:0;padding:9px 12px;display:flex;align-items:flex-end;text-align:left;font-size:14px;font-weight:600;
+  -webkit-mask:var(--sq) center/100% 100% no-repeat;mask:var(--sq) center/100% 100% no-repeat}
+.tile.lt{color:#1f1a26}.tile.dk{color:#fff}
+.tile.add{background:conic-gradient(from 90deg,#ff4d4d,#ffd24d,#5dff7a,#4de1ff,#5b6bff,#d44dff,#ff4d4d);color:#fff}
+.tile.add::before{content:"";position:absolute;inset:3px;background:rgba(22,19,29,.82);
+  -webkit-mask:var(--sq) center/100% 100% no-repeat;mask:var(--sq) center/100% 100% no-repeat}
+.tile.add span{position:relative}
+.tile.add{justify-content:space-between;align-items:flex-end}
+.tile.add .plus{font-size:24px;font-weight:300;line-height:.8;order:2}
+.tile.add[aria-expanded="true"]::before{background:rgba(22,19,29,.55)}
+.tile .del{position:absolute;right:7px;bottom:6px;width:30px;height:30px;border-radius:10px;display:grid;place-items:center;background:rgba(22,19,29,.55);color:#fff}
+.tile .del:active{background:rgba(22,19,29,.85)}
+
+/* confirm dialog */
+.modal{position:fixed;inset:0;z-index:50;display:grid;place-items:end center;padding:16px 16px calc(16px + env(safe-area-inset-bottom));background:rgba(8,6,12,.55);backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px)}
+@media (min-width:600px){.modal{place-items:center}}
+.sheet{width:100%;max-width:380px;background:#262131;border-radius:24px;padding:20px 18px 16px;box-shadow:0 0 0 1px var(--line) inset,0 30px 60px rgba(0,0,0,.6)}
+.sheet .sw{width:44px;height:44px;border-radius:14px;margin-bottom:14px;box-shadow:0 0 0 1px rgba(255,255,255,.15) inset}
+.sheet h2{margin:0 0 4px;font-size:18px;font-weight:700}
+.sheet p{margin:0 0 18px;font-size:14.5px;color:var(--muted)}
+.sheet .acts{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.sheet .acts .btn{padding:13px 0;font-size:15px}
+.btn.danger{background:#e5484d;color:#fff}
+.custom{margin-top:16px;background:var(--panel);border-radius:var(--r-lg);padding:18px 16px 16px;box-shadow:0 0 0 1px var(--line) inset}
+.custom .wheel-wrap{margin:0 auto 16px}
+.custom-bar{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.hint-s{font-size:13.5px;color:var(--muted)}
+.sub{font-size:14px;color:var(--muted);margin:22px 0 10px}
+.note{display:flex;gap:12px;align-items:center;justify-content:space-between;background:var(--panel);border-radius:var(--r-md);padding:12px 14px;font-size:14px;color:var(--muted);margin-bottom:14px}
+.note b{color:var(--text);font-weight:600}
+
+/* buttons */
+.btn{border:0;border-radius:12px;padding:10px 14px;font-size:14px;font-weight:600;background:var(--panel-2);white-space:nowrap}
+.btn.primary{background:rgb(var(--lamp));color:#1a1520}
+.btn.ghost{background:transparent;box-shadow:0 0 0 1px var(--line) inset}
+
+/* effects */
+.fx-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+.fx{
+  position:relative;border:0;text-align:left;border-radius:var(--r-md);padding:14px 14px 13px;min-height:68px;
+  background:var(--panel);box-shadow:0 0 0 1px var(--line) inset;overflow:hidden;
+}
+.fx .t{display:block;font-size:15px;font-weight:600}
+.fx .s{display:block;font-size:12.5px;color:var(--muted);margin-top:2px}
+.fx[aria-pressed="true"]{background:linear-gradient(135deg, rgba(var(--lamp),.32), rgba(var(--lamp),.08));box-shadow:0 0 0 1.5px rgba(var(--lamp),.85) inset}
+.params{background:var(--panel-2);border-radius:var(--r-md);padding:14px 16px 16px;box-shadow:0 0 0 1px rgba(var(--lamp),.35) inset}
+.fx-grid .params{grid-column:1/-1}
+.params.in-list{border-radius:0;box-shadow:none;border-top:1px solid var(--line)}
+.params .ctl+.ctl{margin-top:14px}
+.params .row{margin-bottom:8px}
+.search{width:100%;border:0;border-radius:14px;padding:12px 14px;background:var(--panel);box-shadow:0 0 0 1px var(--line) inset;font-size:16px;outline:none}
+.search::placeholder{color:var(--muted)}
+.list{display:flex;flex-direction:column;margin-top:10px;background:var(--panel);border-radius:var(--r-md);box-shadow:0 0 0 1px var(--line) inset;overflow:hidden}
+.item{display:flex;align-items:center;justify-content:space-between;gap:10px;border:0;background:transparent;text-align:left;padding:13px 16px;font-size:15px;border-top:1px solid var(--line)}
+.item:first-child{border-top:0}
+.item[aria-pressed="true"]{background:rgba(var(--lamp),.16)}
+.item[aria-pressed="true"]::after{content:"";width:9px;height:9px;border-radius:50%;background:rgb(var(--lamp));flex:none}
+.more{margin-top:12px;width:100%}
+
+/* palettes */
+.pal-grid{display:grid;grid-auto-flow:column;grid-template-rows:repeat(2,auto);grid-auto-columns:128px;gap:8px;overflow-x:auto;padding:2px 16px 6px;margin:4px -16px 0;overscroll-behavior-x:contain;scroll-snap-type:x proximity;scrollbar-width:none}
+.pal-grid::-webkit-scrollbar{display:none}
+.pal{scroll-snap-align:start}
+.pal{border:0;border-radius:12px;padding:0;background:var(--panel-2);text-align:left;overflow:hidden;box-shadow:0 0 0 1px var(--line) inset}
+.pal i{display:block;height:22px;background:linear-gradient(90deg,#3a3446,#4a4357)}
+.pal span{display:block;padding:7px 10px 8px;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pal[aria-pressed="true"]{box-shadow:0 0 0 2px #fff inset}
+
+
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom));transform:translate(-50%,20px);opacity:0;background:#2f2a3b;padding:10px 16px;border-radius:14px;font-size:14px;transition:.25s;pointer-events:none;z-index:10;box-shadow:0 10px 30px rgba(0,0,0,.5)}
+.toast.show{opacity:1;transform:translate(-50%,0)}
+
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+@media (min-width:700px){.app{padding-top:40px}}
+@media (min-width:700px) and (display-mode:standalone){.app{padding-top:calc(env(safe-area-inset-top,0px) + 40px)}}
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="top">
+    <div class="pills">
+      <div class="pills-in">
+        <div class="pill conn" id="conn" role="status"><span class="dot"></span><span id="connText">Connecting…</span></div>
+        <button class="pill" id="nlPill" aria-haspopup="true" aria-expanded="false" aria-controls="nlPop">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"/></svg>
+          <span id="nlText">Sleep timer</span>
+        </button>
+        <button class="pill" id="recentPill" hidden></button>
+      </div>
+    </div>
+    <div class="pop" id="nlPop" hidden>
+      <div class="row" style="margin:0"><span class="label">Fade off in</span><button class="link" id="nlCancel" hidden>Cancel timer</button></div>
+      <div class="opts" id="nlOpts"></div>
+    </div>
+  </header>
+
+  <section class="stage">
+    <button class="orb off" id="orb" aria-pressed="false" aria-label="Turn the lamp on"><span class="core" aria-hidden="true"></span><span class="orb-label" id="orbLabel"><svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 3v8"/><path d="M6.4 6.6a8 8 0 1 0 11.2 0"/></svg></span></button>
+  </section>
+
+  <section class="bri">
+    <div class="slider"><input class="range" id="bri" type="range" min="1" max="255" value="128" aria-label="Brightness"><span class="knob" aria-hidden="true"></span></div>
+    <div class="bri-cap" id="briVal" aria-hidden="true">Brightness</div>
+  </section>
+
+  <nav class="tabs">
+    <div class="seg" role="tablist">
+      <button role="tab" aria-selected="true" data-tab="color">Color<span class="md" aria-hidden="true"></span></button>
+      <button role="tab" aria-selected="false" data-tab="fx">Effects<span class="md" aria-hidden="true"></span></button>
+    </div>
+  </nav>
+
+  <!-- COLOUR -->
+  <section id="tab-color" role="tabpanel">
+    <div class="tiles" id="tiles"></div>
+    <div class="custom" id="custom" hidden>
+      <div class="wheel-wrap" id="wheelWrap">
+        <canvas id="wheel" width="600" height="600" aria-label="Color picker"></canvas>
+        <div class="thumb" id="thumb"></div>
+      </div>
+      <div class="custom-bar">
+        <span class="hint-s">Pick a color, then save it to your colors</span>
+        <button class="btn primary" id="saveColor">Save color</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- EFFECTS -->
+  <section id="tab-fx" role="tabpanel" hidden>
+    <div class="fx-grid" id="fxGrid"></div>
+    <div class="params" id="params" hidden></div>
+    <button class="btn ghost more" id="allToggle" aria-expanded="false">All WLED effects</button>
+    <div id="allBox" hidden>
+      <input class="search" id="fxSearch" type="search" placeholder="Search effects" style="margin-top:12px" autocomplete="off">
+      <div class="list" id="fxList"></div>
+    </div>
+  </section>
+
+
+</div>
+<div class="toast" id="toast" role="status"></div>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs><path id="sqp" vector-effect="non-scaling-stroke" d="M153.50 0.00 L166.19 0.05 L171.13 0.19 L174.85 0.43 L177.93 0.76 L180.59 1.19 L182.93 1.72 L185.03 2.35 L186.93 3.08 L188.65 3.91 L190.21 4.85 L191.63 5.91 L192.93 7.07 L194.09 8.37 L195.15 9.79 L196.09 11.35 L196.92 13.07 L197.65 14.97 L198.28 17.07 L198.81 19.41 L199.24 22.07 L199.57 25.15 L199.81 28.87 L199.95 33.81 L200.00 46.50 L200.00 53.50 L199.95 66.19 L199.81 71.13 L199.57 74.85 L199.24 77.93 L198.81 80.59 L198.28 82.93 L197.65 85.03 L196.92 86.93 L196.09 88.65 L195.15 90.21 L194.09 91.63 L192.93 92.93 L191.63 94.09 L190.21 95.15 L188.65 96.09 L186.93 96.92 L185.03 97.65 L182.93 98.28 L180.59 98.81 L177.93 99.24 L174.85 99.57 L171.13 99.81 L166.19 99.95 L153.50 100.00 L46.50 100.00 L33.81 99.95 L28.87 99.81 L25.15 99.57 L22.07 99.24 L19.41 98.81 L17.07 98.28 L14.97 97.65 L13.07 96.92 L11.35 96.09 L9.79 95.15 L8.37 94.09 L7.07 92.93 L5.91 91.63 L4.85 90.21 L3.91 88.65 L3.08 86.93 L2.35 85.03 L1.72 82.93 L1.19 80.59 L0.76 77.93 L0.43 74.85 L0.19 71.13 L0.05 66.19 L0.00 53.50 L0.00 46.50 L0.05 33.81 L0.19 28.87 L0.43 25.15 L0.76 22.07 L1.19 19.41 L1.72 17.07 L2.35 14.97 L3.08 13.07 L3.91 11.35 L4.85 9.79 L5.91 8.37 L7.07 7.07 L8.37 5.91 L9.79 4.85 L11.35 3.91 L13.07 3.08 L14.97 2.35 L17.07 1.72 L19.41 1.19 L22.07 0.76 L25.15 0.43 L28.87 0.19 L33.81 0.05 L46.50 0.00Z"/></defs></svg>
+<div class="modal" id="confirm" hidden role="dialog" aria-modal="true" aria-labelledby="confirmT">
+  <div class="sheet">
+    <div class="sw" id="confirmSw"></div>
+    <h2 id="confirmT">Delete this color?</h2>
+    <p>It will be removed from your colors. This can’t be undone.</p>
+    <div class="acts"><button class="btn" id="confirmNo">Cancel</button><button class="btn danger" id="confirmYes">Delete</button></div>
+  </div>
+</div>
+
+<script>
+(() => {
+'use strict';
+const $ = s => document.querySelector(s);
+const qs = new URLSearchParams(location.search);
+const store = {
+  get(k, d){ try{ const v = localStorage.getItem('lamp.'+k); return v==null ? d : JSON.parse(v) }catch(e){ return d } },
+  set(k, v){ try{ localStorage.setItem('lamp.'+k, JSON.stringify(v)) }catch(e){} }
+};
+// Where the lamp is: ?host=… → the page's own host (when served by the lamp) → saved/default address.
+const HOST = qs.get('host') || (/^https?:$/.test(location.protocol) && location.host ? location.host : store.get('host','192.168.1.133'));
+const BASE = 'http://' + HOST;
+
+/* ---------- curated effects (names as WLED reports them) ---------- */
+// Scenes: hand-tuned recipes (effect + palette + speed) that look calm on a diffused lamp.
+// Names are WLED's own effect/palette names, resolved to ids at runtime.
+const SCENES = [
+  // single-colour scenes use the "* Color 1" palette so the colours below are exactly what you see
+  {k:'candle',    n:'Candle',    d:'Slow warm flicker',          fx:'Candle',     pal:'* Color 1',        col:[[255,120,25],[170,60,10],[0,0,0]],     sx:50, ix:90},
+  {k:'embers',    n:'Embers',    d:'Yellow, orange, soft red',   fx:'Lake',       pal:'* Color Gradient', col:[[255,196,70],[255,128,30],[214,72,40]], sx:50, ix:128},
+  {k:'breathe',   n:'Breathe',   d:'Warm white pulse', fx:'Breathe',  pal:'* Color 1',        col:[[255,196,140],[30,12,4],[0,0,0]],      sx:30, ix:128},
+  {k:'ocean',     n:'Ocean',     d:'Calm deep water',            fx:'Pacifica',   pal:'Default',          sx:80, ix:128},
+  {k:'aurora',    n:'Aurora',    d:'Green and violet waves',     fx:'Aurora',     pal:'Aurora',           sx:24, ix:115},
+  {k:'sunset',    n:'Sunset',    d:'Orange, pink and violet',    fx:'Colorwaves', pal:'Sunset',           sx:30, ix:100},
+  {k:'lagoon',    n:'Lagoon',    d:'Blue and teal current',      fx:'Flow',       pal:'Atlantica',        sx:30, ix:100},
+  {k:'fireflies', n:'Fireflies', d:'Sparks in the dark', fx:'Twinklefox', pal:'* Color 1',      col:[[210,255,70],[0,0,0],[0,0,0]],         sx:50, ix:90},
+  {k:'pastel',    n:'Pastel',    d:'Soft tints blending',        fx:'Plasma',     pal:'Pastel',           sx:20, ix:80},
+  {k:'spectrum',  n:'Spectrum',  d:'Slow drift through hues',    fx:'Colorloop',  pal:'Default',          sx:15, ix:200},
+];
+const PAL_NAMES = {'* Random Cycle':'Random cycle','* Color 1':'Your color','* Colors 1&2':'Colors 1 & 2','* Color Gradient':'Color gradient','* Colors Only':'Colors only'};
+const COLORS = [
+  ['Candle',[255,138,40]],['Warm',[255,180,100]],['Neutral',[255,228,200]],
+  ['Cool',[205,225,255]],['Coral',[255,112,96]],['Apricot',[255,150,90]],
+  ['Honey',[255,208,96]],['Mint',[122,222,156]],['Aqua',[88,212,208]],
+  ['Sky',[100,166,255]],['Lavender',[168,138,255]],['Rose',[255,128,172]],
+];
+
+/* ---------- state ---------- */
+let S = null;               // last state from the lamp
+let nlEnd = 0, nlLock = 0;  // sleep timer: local end time, and a short window where lamp reports are ignored
+let effects = [], palettes = [], fxdata = [], palColors = {};
+let ws = null, wsOk = false, lastMsg = 0, liveAt = 0, pollT = null, dragging = null;
+
+/* ---------- transport ---------- */
+function setConn(kind, text){ const c=$('#conn'); c.className='pill conn '+kind; $('#connText').textContent=text; }
+async function getJSON(path){
+  const r = await fetch(BASE+path, {cache:'no-store'});
+  if(!r.ok) throw new Error(r.status);
+  return r.json();
+}
+async function send(obj){
+  if(ws && ws.readyState===1){ ws.send(JSON.stringify(obj)); return; }
+  try{
+    const r = await fetch(BASE+'/json/state',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(Object.assign({v:true},obj))});
+    const j = await r.json(); if(j && j.seg) onState(j);
+    setConn('ok','Connected');
+  }catch(e){ setConn('bad','Offline'); }
+}
+// leading + trailing throttle per channel, so sliders feel live without flooding the ESP8266
+const thr = {};
+function throttled(key, fn, ms=110){
+  const t = thr[key] || (thr[key]={last:0,timer:null,fn:null});
+  t.fn = fn;
+  const now = Date.now(), wait = ms-(now-t.last);
+  if(wait<=0){ t.last=now; fn(); }
+  else if(!t.timer){ t.timer=setTimeout(()=>{ t.timer=null; t.last=Date.now(); t.fn(); }, wait); }
+}
+
+function connectWS(){
+  try{ ws = new WebSocket('ws://'+HOST+'/ws'); }catch(e){ startPolling(); return; }
+  ws.binaryType='arraybuffer';
+  ws.onopen = () => { wsOk=true; setConn('ok','Connected'); stopPolling(); if(!document.hidden) ws.send('{"lv":true}'); };
+  ws.onmessage = e => {
+    lastMsg = Date.now();
+    if(typeof e.data !== 'string'){ onLive(new Uint8Array(e.data)); return; }
+    try{ const j = JSON.parse(e.data); if(j.info) onInfo(j.info); if(j.state) onState(j.state); }catch(_){}
+  };
+  ws.onclose = () => { wsOk=false; ws=null; startPolling(); setTimeout(connectWS, 4000); };
+  ws.onerror = () => { try{ ws.close() }catch(_){} };
+}
+function startPolling(){ if(pollT) return; poll(); pollT=setInterval(poll, 3000); }
+function stopPolling(){ clearInterval(pollT); pollT=null; }
+async function poll(){
+  try{ const j = await getJSON('/json/si'); onInfo(j.info); onState(j.state); setConn('ok', 'Connected'); }
+  catch(e){ setConn('bad','Offline'); }
+}
+document.addEventListener('visibilitychange', () => {
+  if(ws && ws.readyState===1) ws.send(document.hidden?'{"lv":false}':'{"lv":true}');
+  if(!document.hidden && !wsOk) poll();
+});
+
+/* ---------- live LED view → orb ---------- */
+let liveFrame = null, rafQ = false;
+function onLive(b){
+  if(b[0]!==76) return;                 // 'L'
+  const start = b[1]===2 ? 4 : 2;       // v2 frames carry width/height
+  liveFrame = b.subarray(start); liveAt = Date.now();
+  if(!rafQ){ rafQ=true; requestAnimationFrame(drawLive); }
+}
+function drawLive(){
+  rafQ=false; const b = liveFrame; if(!b) return;
+  const n = Math.floor(b.length/3); if(!n) return;
+  const steps = Math.min(n, 30), stops=[]; let R=0,G=0,B=0;
+  for(let i=0;i<steps;i++){
+    const k = Math.floor(i*n/steps)*3, r=b[k], g=b[k+1], bl=b[k+2];
+    R+=r; G+=g; B+=bl; stops.push(`rgb(${r},${g},${bl})`);
+  }
+  stops.push(stops[0]);
+  setOrb('conic-gradient('+stops.join(',')+')', [R/steps,G/steps,B/steps], true);
+}
+function setOrb(bg, rgb, live){
+  const orb = $('#orb');
+  orb.style.setProperty('--leds', bg);
+  // normalise the glow colour so dim LEDs still tint the room
+  const m = Math.max(rgb[0],rgb[1],rgb[2],1), k = 255/m;
+  const c = rgb.map(v=>Math.round(Math.min(255, v*k)));
+  if(m>8 || !live) document.documentElement.style.setProperty('--lamp', c.join(','));
+}
+function orbFromState(){
+  if(!S || Date.now()-liveAt < 2500) return;
+  const sg = S.seg[0]; let cols;
+  if(sg.fx===0) cols=[sg.col[0]];
+  else cols = paletteCSS(sg.pal, sg) || sg.col.filter(c=>c.some(v=>v>0));
+  if(!cols.length) cols=[[255,170,60]];
+  if(typeof cols==='string'){ setOrb('conic-gradient('+cols+')', avgFromCss(sg.pal, sg)); return; }
+  const stops = cols.map(c=>`rgb(${c[0]},${c[1]},${c[2]})`); if(stops.length===1) stops.push(stops[0]);
+  const avg=[0,1,2].map(i=>cols.reduce((a,c)=>a+c[i],0)/cols.length);
+  setOrb('conic-gradient('+stops.join(',')+','+stops[0]+')', avg);
+}
+
+/* ---------- palettes ---------- */
+function palStops(id, sg){
+  const p = palColors[id]; if(!p) return null;
+  const segc = sg ? sg.col : [[255,160,0],[0,0,0],[0,0,0]];
+  return p.map((e,i)=>{
+    if(typeof e==='string'){
+      let c = e==='r' ? hsv((i*97)%360,1,1) : (segc[(+e[1]||1)-1]||[0,0,0]);
+      return {pos:Math.round(i*100/Math.max(1,p.length-1)), c};
+    }
+    return {pos:Math.round(e[0]/255*100), c:[e[1],e[2],e[3]]};
+  });
+}
+function paletteCSS(id, sg){
+  const st = palStops(id, sg); if(!st) return null;
+  return st.map(s=>`rgb(${s.c.join(',')}) ${s.pos}%`).join(',');
+}
+function avgFromCss(id, sg){
+  const st = palStops(id, sg) || [{c:[255,170,60]}];
+  return [0,1,2].map(i=>st.reduce((a,s)=>a+s.c[i],0)/st.length);
+}
+let palLoading = false;
+async function loadPalettes(){
+  if(palLoading) return; palLoading=true;
+  for(let page=0, max=0; page<=max; page++){
+    try{
+      const j = await getJSON('/json/palx?page='+page);
+      max = j.m||0; Object.assign(palColors, j.p||{});
+      renderPalGrid(); orbFromState();
+    }catch(e){ break; }
+    await new Promise(r=>setTimeout(r,180));
+  }
+}
+
+/* ---------- incoming ---------- */
+function onInfo(i){
+  /* nothing shown from info for now */
+}
+function onState(st){
+  if(!st || !st.seg) return;
+  S = st; const sg = st.seg[0];
+  if(st.nl && st.nl.on && st.nl.rem>0 && Date.now()>nlLock && st.nl.rem <= (st.nl.dur||0)*60) nlEnd = Date.now() + st.nl.rem*1000;
+  // power + orb
+  const orb = $('#orb');
+  orb.classList.toggle('off', !st.on); document.body.classList.toggle('is-off', !st.on);
+  orb.setAttribute('aria-pressed', st.on);
+  orb.setAttribute('aria-label', st.on?'Turn the lamp off':'Turn the lamp on');
+  document.documentElement.style.setProperty('--glow', st.on ? (0.35+0.65*st.bri/255).toFixed(2) : 0);
+  const fxName = fxLabel(sg.fx);
+  // brightness
+  if(dragging!=='bri') setRange($('#bri'), st.bri);
+  $('#briVal').textContent = 'Brightness '+Math.max(1,Math.round(st.bri/255*100))+'%';
+  // colour tab
+  if(dragging!=='wheel') placeThumb(sg.col[0]);
+  markColorChips(sg.col[0]);
+  // effects
+  markFx();
+  if(shownFx!==sg.fx) renderParams(); else syncParams();
+  placeParams();
+  // which mode the lamp is in: solid colour or an effect
+  document.querySelector('[data-tab="color"]').classList.toggle('mode', sg.fx===0);
+  document.querySelector('[data-tab="fx"]').classList.toggle('mode', sg.fx!==0);
+  // night light
+  renderTimer();
+  renderRecent();
+  orbFromState();
+}
+
+/* ---------- touch-friendly sliders ----------
+   Native range inputs on iOS only move when you grab the thumb. For touch we track the finger
+   ourselves: a tap jumps to that spot, a sideways drag follows the finger, a vertical swipe
+   is left to the page so it can still scroll. */
+function enhanceRange(el){
+  let st = null;
+  const valAt = x => {
+    const r = el.getBoundingClientRect(), min=+el.min, max=+el.max;
+    const cs = getComputedStyle(el.closest('.slider')||el);
+    const edge = (parseFloat(cs.getPropertyValue('--pad')) + parseFloat(cs.getPropertyValue('--kw'))/2) || 0;
+    const k = Math.min(1, Math.max(0, (x - r.left - edge) / (r.width - 2*edge)));
+    return Math.round(min + k*(max-min));
+  };
+  const apply = x => { const v = valAt(x); if(+el.value!==v){ el.value = v; el.dispatchEvent(new Event('input',{bubbles:true})); } };
+  el.addEventListener('pointerdown', e => { if(e.pointerType==='mouse') return; st = {x:e.clientX, y:e.clientY, drag:false}; });
+  el.addEventListener('pointermove', e => {
+    if(!st) return;
+    const dx = e.clientX-st.x, dy = e.clientY-st.y;
+    if(!st.drag && Math.abs(dx) > 4 && Math.abs(dx) >= Math.abs(dy)){ st.drag = true; try{ el.setPointerCapture(e.pointerId) }catch(_){} }
+    if(st.drag){ e.preventDefault(); apply(e.clientX); }
+  });
+  el.addEventListener('pointerup', e => {
+    if(!st) return; if(!st.drag) apply(e.clientX);
+    st = null; el.dispatchEvent(new Event('change',{bubbles:true}));
+  });
+  el.addEventListener('pointercancel', () => { st = null; });
+}
+
+/* ---------- brightness + power ---------- */
+function setRange(el, v){ el.value=v; (el.closest('.slider')||el).style.setProperty('--k', ((v-el.min)/(el.max-el.min)).toFixed(4)); }
+
+/* iOS-style continuous corners for elements whose size changes (sliders): build the mask for the exact size */
+function squirclePath(w, h, r){
+  const c = Math.min(r*1.55, h/2, w/2), n = 4.2, pts = [];
+  const arc = (cx, cy, a0, a1) => { for(let i=0;i<=16;i++){ const t=a0+(a1-a0)*i/16, x=Math.cos(t), y=Math.sin(t);
+    pts.push((cx + c*Math.sign(x)*Math.abs(x)**(2/n)).toFixed(1)+' '+(cy + c*Math.sign(y)*Math.abs(y)**(2/n)).toFixed(1)); } };
+  arc(w-c, c, -Math.PI/2, 0); arc(w-c, h-c, 0, Math.PI/2); arc(c, h-c, Math.PI/2, Math.PI); arc(c, c, Math.PI, 1.5*Math.PI);
+  return 'M'+pts.join(' L')+'Z';
+}
+const sqRO = 'ResizeObserver' in window ? new ResizeObserver(es => es.forEach(e => paintSquircle(e.target))) : null;
+function paintSquircle(el){
+  const w = el.offsetWidth, h = el.offsetHeight; if(!w || !h) return;
+  const r = +el.dataset.sq || 18;
+  const svg = `<svg xmlns='http://www.w3.org/2000/svg' width='${w}' height='${h}' viewBox='0 0 ${w} ${h}'><path d='${squirclePath(w,h,r)}'/></svg>`;
+  const url = `url("data:image/svg+xml,${encodeURIComponent(svg)}")`;
+  el.style.webkitMaskImage = el.style.maskImage = url;
+  el.style.webkitMaskSize = el.style.maskSize = '100% 100%';
+  el.style.borderRadius = '0';
+}
+function squircle(el, r){ el.dataset.sq = r; paintSquircle(el); if(sqRO) sqRO.observe(el); }
+$('#orb').addEventListener('click', () => {
+  if(!S) return;
+  S.on = !S.on; onState(S); send({on:S.on});
+});
+const bri = $('#bri');
+bri.addEventListener('input', () => {
+  dragging='bri'; setRange(bri, +bri.value);
+  $('#briVal').textContent = 'Brightness '+Math.max(1,Math.round(bri.value/255*100))+'%';
+  const v = +bri.value;
+  throttled('bri', () => send({on:true, bri:v}));
+});
+bri.addEventListener('change', () => { dragging=null; if(S){S.bri=+bri.value; S.on=true; onState(S);} });
+enhanceRange(bri); squircle(bri, 20); squircle(bri.nextElementSibling, 12);
+
+/* ---------- tabs ---------- */
+document.querySelectorAll('[data-tab]').forEach(b => b.addEventListener('click', () => {
+  document.querySelectorAll('[data-tab]').forEach(x=>x.setAttribute('aria-selected', x===b));
+  ['color','fx'].forEach(t => $('#tab-'+t).hidden = t!==b.dataset.tab);
+  store.set('tab', b.dataset.tab);
+}));
+
+/* ---------- colour wheel ---------- */
+const cv = $('#wheel'), ctx = cv.getContext('2d');
+(function drawWheel(){
+  const W=cv.width, r=W/2, img=ctx.createImageData(W,W), d=img.data;
+  for(let y=0;y<W;y++) for(let x=0;x<W;x++){
+    const dx=x-r, dy=y-r, dist=Math.sqrt(dx*dx+dy*dy), i=(y*W+x)*4;
+    if(dist>r){ d[i+3]=0; continue; }
+    const h=(Math.atan2(dy,dx)*180/Math.PI+360)%360, s=Math.min(1,dist/r);
+    const c=hsv(h,s,1); d[i]=c[0]; d[i+1]=c[1]; d[i+2]=c[2]; d[i+3]=255;
+  }
+  ctx.putImageData(img,0,0);
+})();
+function hsv(h,s,v){
+  const f=n=>{const k=(n+h/60)%6; return v-v*s*Math.max(0,Math.min(k,4-k,1))};
+  return [f(5),f(3),f(1)].map(x=>Math.round(x*255));
+}
+function toHsv([r,g,b]){
+  r/=255; g/=255; b/=255;
+  const mx=Math.max(r,g,b), mn=Math.min(r,g,b), d=mx-mn;
+  let h=0; if(d){ h = mx===r?((g-b)/d)%6 : mx===g?(b-r)/d+2 : (r-g)/d+4; h*=60; if(h<0)h+=360; }
+  return [h, mx?d/mx:0, mx];
+}
+function placeThumb(rgb){
+  const [h,s] = toHsv(rgb), t=$('#thumb');
+  const a = h*Math.PI/180, rr = s*50;
+  t.style.left = (50+Math.cos(a)*rr)+'%'; t.style.top = (50+Math.sin(a)*rr)+'%';
+  t.style.setProperty('--pick', rgb.join(','));
+}
+function pickAt(e){
+  const box = cv.getBoundingClientRect(), r = box.width/2;
+  const dx = e.clientX-box.left-r, dy = e.clientY-box.top-r;
+  const h = (Math.atan2(dy,dx)*180/Math.PI+360)%360, s = Math.min(1, Math.hypot(dx,dy)/r);
+  return hsv(h, s, 1);
+}
+let lastPick = null;
+const wrap = $('#wheelWrap');
+wrap.addEventListener('pointerdown', e => { dragging='wheel'; wrap.setPointerCapture(e.pointerId); onPick(e); });
+wrap.addEventListener('pointermove', e => { if(dragging==='wheel') onPick(e); });
+const endPick = () => { if(dragging!=='wheel') return; dragging=null; if(lastPick){ addRecent(lastPick); setColor(lastPick, true); } };
+wrap.addEventListener('pointerup', endPick); wrap.addEventListener('pointercancel', endPick);
+function onPick(e){ lastPick = pickAt(e); placeThumb(lastPick); setColor(lastPick); }
+function setColor(rgb, final){
+  if(S){
+    const wasScene = S.seg[0].fx !== 0;
+    S.seg[0].col[0] = rgb; S.seg[0].fx = 0; S.on = true;
+    document.documentElement.style.setProperty('--lamp', rgb.join(','));
+    if(final || wasScene) onState(S);
+  }
+  throttled('col', () => send({on:true, seg:[{id:0, fx:0, col:[rgb]}]}));
+}
+/* colour tiles: built-in colours + your saved ones + the Custom tile that opens the wheel */
+const lum = c => .2126*c[0]+.7152*c[1]+.0722*c[2];
+function savedColors(){ return store.get('saved',[]).filter(c=>Array.isArray(c) && c.length===3); }
+function renderTiles(){
+  const open = !$('#custom').hidden;
+  const tile = (c, label, extra='') => `<div class="tw" style="--c:${c}"><svg class="ring" viewBox="0 0 200 100" preserveAspectRatio="none" aria-hidden="true"><use href="#sqp" fill="none" stroke="#fff" stroke-width="10"/><use href="#sqp" fill="none" stroke="var(--ink)" stroke-width="5"/></svg><button class="tile ${lum(c)>150?'lt':'dk'}" style="background:rgb(${c})" data-rgb="${c}" aria-pressed="false" aria-label="${label}">${extra}${label.startsWith('Saved')?'':`<span>${label}</span>`}</button></div>`;
+  $('#tiles').innerHTML =
+    COLORS.map(([n,c]) => tile(c, n)).join('') +
+    savedColors().map((c,i) => tile(c, 'Saved color '+(i+1), `<span class="del" role="button" tabindex="0" data-del="${i}" aria-label="Delete saved color"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h16"/><path d="M10 11v6M14 11v6"/><path d="M6 7l1 12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-12"/><path d="M9 7V4h6v3"/></svg></span>`)).join('') +
+    `<div class="tw"><button class="tile add" id="addTile" aria-expanded="${open}" aria-controls="custom"><span class="plus" aria-hidden="true">${open?'–':'+'}</span><span>${open?'Close':'Custom'}</span></button></div>`;
+  if(S) markColorChips(S.seg[0].col[0]);
+}
+$('#tiles').addEventListener('click', e => {
+  const del = e.target.closest('[data-del]');
+  if(del){ e.stopPropagation(); askDelete(+del.dataset.del); return; }
+  if(e.target.closest('#addTile')){
+    const c = $('#custom'); c.hidden = !c.hidden; renderTiles();
+    if(!c.hidden) c.scrollIntoView({behavior:'smooth', block:'nearest'});
+    return;
+  }
+  const b = e.target.closest('[data-rgb]'); if(!b) return;
+  const c = b.dataset.rgb.split(',').map(Number); placeThumb(c); setColor(c,true); pushRecent({c});
+});
+function askDelete(i){
+  const c = savedColors()[i]; if(!c) return;
+  const m = $('#confirm');
+  $('#confirmSw').style.background = `rgb(${c})`;
+  m.hidden = false; m.dataset.i = i;
+  $('#confirmYes').focus();
+}
+function closeConfirm(){ $('#confirm').hidden = true; }
+$('#confirmNo').addEventListener('click', closeConfirm);
+$('#confirm').addEventListener('click', e => { if(e.target.id==='confirm') closeConfirm(); });
+document.addEventListener('keydown', e => { if(e.key==='Escape' && !$('#confirm').hidden) closeConfirm(); });
+$('#confirmYes').addEventListener('click', () => {
+  const r = savedColors(); r.splice(+$('#confirm').dataset.i, 1); store.set('saved', r);
+  closeConfirm(); renderTiles(); toast('Color deleted');
+});
+$('#saveColor').addEventListener('click', () => {
+  if(!S) return; const c = S.seg[0].col[0].slice(0,3);
+  const r = savedColors();
+  if(COLORS.some(([,x])=>x.join()===c.join()) || r.some(x=>x.join()===c.join())){ toast('This color is already in your colors'); return; }
+  r.push(c); store.set('saved', r.slice(-15)); renderTiles(); toast('Color saved');
+});
+// recent items: {c:[r,g,b]} for colours, {fx:id} for effects
+function recentList(){ return store.get('recent2',[]).filter(x=>x && (x.c || x.fx || x.sc)); }
+function pushRecent(item){
+  const key = x => x.c ? 'c'+x.c.join() : x.sc ? 'sc'+x.sc : 'fx'+x.fx;
+  let r = recentList().filter(x=>key(x)!==key(item));
+  r.unshift(item); r=r.slice(0,9); store.set('recent2',r); renderRecent();
+}
+function addRecent(c){ pushRecent({c}); }
+// The Recent pill offers the last thing you applied that isn't on right now, so one tap takes you back.
+let recentItem = null;
+function isCurrent(x){
+  if(!S) return false; const sg = S.seg[0];
+  if(x.sc){ const a = activeScene(); return !!a && a.k===x.sc; }
+  return x.c ? (sg.fx===0 && sg.col[0].join()===x.c.join()) : (sg.fx===x.fx && !activeScene());
+}
+function renderRecent(){
+  const pill = $('#recentPill');
+  recentItem = recentList().find(x => (x.c || (x.sc ? sceneByKey(x.sc) && effects.length : effects[x.fx])) && !isCurrent(x)) || null;
+  pill.hidden = !recentItem; if(!recentItem) return;
+  pill.innerHTML = recentItem.c
+    ? `<span class="pdot" style="background:rgb(${recentItem.c})"></span>Recent`
+    : `<span class="pdot multi"></span>Recent <span class="pm">${esc(recentName(recentItem))}</span>`;
+  pill.setAttribute('aria-label', recentItem.c ? 'Back to the previous color' : 'Back to '+recentName(recentItem));
+}
+function recentName(x){ return x.sc ? sceneByKey(x.sc).n : (effects[x.fx]||'Effect'); }
+$('#recentPill').addEventListener('click', () => {
+  const x = recentItem; if(!x || !S) return;
+  if(x.sc){ applyScene(sceneByKey(x.sc)); return; }
+  if(x.c){ S.seg[0].fx = 0; S.seg[0].col[0] = x.c; S.on = true; placeThumb(x.c); onState(S); send({on:true, seg:[{id:0, fx:0, col:[x.c]}]}); pushRecent({c:x.c}); }
+  else { S.seg[0].fx = x.fx; S.on = true; onState(S); send({on:true, seg:[{id:0, fx:x.fx, fxdef:true}]}); pushRecent({fx:x.fx}); }
+});
+function markColorChips(c){ document.querySelectorAll('#recent [data-rgb], #tiles [data-rgb]').forEach(b=>b.setAttribute('aria-pressed', b.dataset.rgb===c.join(','))); }
+
+/* ---------- effects ---------- */
+function fxMeta(id){
+  // WLED metadata: "sliders;colours;palette;flags;defaults"
+  const raw = fxdata[id];
+  if(id===0) return {sliders:[]};
+  if(raw==null || raw==='') return {sliders:['!','!']};
+  const p = raw.split(';');
+  return {sliders:(p[0]||'').split(',').slice(0,5), flags:p[3]||''};
+}
+function usable(id){
+  const n = effects[id]; if(!n || n==='RSVD') return false;
+  const f = fxMeta(id).flags||'';
+  if(/[vf]/.test(f)) return false;               // needs a microphone
+  if(f.includes('2') && !f.includes('1')) return false; // 2D matrix only
+  return true;
+}
+const sceneFx  = sc => effects.indexOf(sc.fx);
+const scenePal = sc => sc.pal ? palettes.indexOf(sc.pal) : -1;
+function activeScene(){
+  if(!S) return null; const sg = S.seg[0];
+  return SCENES.find(sc => sceneFx(sc)===sg.fx && (!sc.pal || scenePal(sc)===sg.pal)) || null;
+}
+function sceneByKey(k){ return SCENES.find(x=>x.k===k); }
+function fxLabel(id){
+  const a = activeScene(); if(a && sceneFx(a)===id) return a.n;
+  const sc = SCENES.find(x=>sceneFx(x)===id); return sc ? sc.n : (effects[id]||'Effect');
+}
+function applyScene(sc){
+  const fx = sceneFx(sc); if(fx<0 || !S) return;
+  const seg = {id:0, fx, sx:sc.sx, ix:sc.ix, c1:128, c2:128, c3:16, o1:false, o2:false, o3:false};
+  const pal = scenePal(sc); seg.pal = pal>=0 ? pal : 0;
+  if(sc.col) seg.col = sc.col.map(c=>c.slice());
+  Object.assign(S.seg[0], seg);
+  S.on = true; paramsOpen = true; onState(S);
+  send({on:true, seg:[seg]});
+  pushRecent({sc:sc.k});
+}
+function renderFx(){
+  $('#fxGrid').innerHTML = SCENES.filter(sc=>sceneFx(sc)>=0).map(sc =>
+    `<button class="fx" data-scene="${sc.k}" aria-pressed="false"><span class="t">${sc.n}</span><span class="s">${sc.d}</span></button>`).join('');
+  renderFxList();
+}
+function renderFxList(){
+  const q = $('#fxSearch').value.trim().toLowerCase();
+  const ids = effects.map((n,i)=>i).filter(i=>i>0 && usable(i) && (!q || effects[i].toLowerCase().includes(q)))
+    .sort((a,b)=>effects[a].localeCompare(effects[b]));
+  $('#fxList').innerHTML = ids.length ? ids.map(i=>`<button class="item" data-fx="${i}" aria-pressed="false"><span>${effects[i]}</span></button>`).join('')
+    : `<div class="item" style="color:var(--muted)">No effects match. Try another name</div>`;
+  markFx(); placeParams();
+}
+$('#fxSearch').addEventListener('input', renderFxList);
+$('#allToggle').addEventListener('click', e => {
+  const open = $('#allBox').hidden; $('#allBox').hidden = !open;
+  e.currentTarget.setAttribute('aria-expanded', open);
+  e.currentTarget.textContent = open ? 'Hide full list' : 'All WLED effects';
+  placeParams();
+});
+// scene cards
+$('#fxGrid').addEventListener('click', e => {
+  const b = e.target.closest('[data-scene]'); if(!b || !S) return;
+  const sc = sceneByKey(b.dataset.scene);
+  if(activeScene()===sc){ paramsOpen = !paramsOpen; placeParams(); return; }   // tap again to hide settings
+  applyScene(sc);
+});
+// raw WLED effects from the full list: load the effect's own recommended defaults
+$('#fxList').addEventListener('click', e => {
+  const b = e.target.closest('[data-fx]'); if(!b || !S) return;
+  const id = +b.dataset.fx;
+  if(S.seg[0].fx===id && !activeScene()){ paramsOpen = !paramsOpen; placeParams(); return; }
+  S.seg[0].fx = id; S.on = true; paramsOpen = true; onState(S);
+  send({on:true, seg:[{id:0, fx:id, fxdef:true}]});
+  pushRecent({fx:id});
+});
+function markFx(){
+  const a = activeScene(), fx = S ? S.seg[0].fx : -1;
+  document.querySelectorAll('[data-scene]').forEach(b => b.setAttribute('aria-pressed', !!a && b.dataset.scene===a.k));
+  document.querySelectorAll('#fxList [data-fx]').forEach(b => b.setAttribute('aria-pressed', !a && +b.dataset.fx===fx));
+}
+// settings open right under the chosen card
+const PARAMS = $('#params');
+let paramsOpen = true;
+function placeParams(){
+  const a = activeScene();
+  let anchor = null, inGrid = false;
+  if(a){ anchor = document.querySelector(`#fxGrid [data-scene="${a.k}"]`); inGrid = true; }
+  else if(S && S.seg[0].fx){ const it = document.querySelector(`#fxList [data-fx="${S.seg[0].fx}"]`); if(it && !$('#allBox').hidden) anchor = it; }
+  if(!anchor || !paramsOpen || !PARAMS.dataset.has){ PARAMS.hidden = true; return; }
+  if(inGrid){
+    const cards = [...$('#fxGrid').querySelectorAll('[data-scene]')], i = cards.indexOf(anchor);
+    const rowEnd = cards[Math.min(cards.length-1, i|1)];
+    if(PARAMS.previousElementSibling!==rowEnd) rowEnd.after(PARAMS);
+  } else if(PARAMS.previousElementSibling!==anchor) anchor.after(PARAMS);
+  PARAMS.classList.toggle('in-list', !inGrid);
+  PARAMS.hidden = false;
+}
+const SL = [['sx','Speed'],['ix','Intensity'],['c1','Custom 1'],['c2','Custom 2'],['c3','Custom 3']];
+let shownFx = null;
+function renderParams(){
+  if(!S) return;
+  const sg = S.seg[0], m = fxMeta(sg.fx); shownFx = sg.fx;
+  const sliders = m.sliders.map((n,i)=>[n,i]).filter(([n])=>n!=='');
+  PARAMS.dataset.has = sliders.length ? '1' : '';
+  PARAMS.innerHTML = sliders.map(([n,i])=>{
+    const [key, def] = SL[i], label = n==='!' ? def : n;
+    const max = key==='c3' ? 31 : 255;
+    return `<div class="ctl"><div class="row"><span class="label">${label}</span><span class="value" data-v="${key}"></span></div>
+      <div class="slider thin"><input class="range thin" type="range" min="0" max="${max}" data-k="${key}" aria-label="${label}"><span class="knob" aria-hidden="true"></span></div></div>`;
+  }).join('');
+  PARAMS.querySelectorAll('[data-k]').forEach(el => {
+    el.addEventListener('input', () => {
+      dragging = el.dataset.k; setRange(el, +el.value); showVal(el);
+      const k = el.dataset.k, v = +el.value;
+      throttled(k, () => send({seg:[{id:0, [k]:v}]}));
+    });
+    el.addEventListener('change', () => { dragging=null; S.seg[0][el.dataset.k] = +el.value; });
+    enhanceRange(el); squircle(el, 13); squircle(el.nextElementSibling, 8);
+  });
+  syncParams();
+}
+function showVal(el){
+  const out = PARAMS.querySelector(`[data-v="${el.dataset.k}"]`);
+  if(out) out.textContent = Math.round(+el.value/+el.max*100)+'%';
+}
+function syncParams(){
+  if(!S) return; const sg = S.seg[0];
+  PARAMS.querySelectorAll('[data-k]').forEach(el => { if(dragging!==el.dataset.k){ setRange(el, sg[el.dataset.k]??128); } showVal(el); });
+}
+function palName(i){ const n = palettes[i]||''; return PAL_NAMES[n] || n; }
+function renderPalGrid(){
+  const g = $('#palGrid'); if(!g || !palettes.length) return;
+  const cur = S ? S.seg[0].pal : 0, sg = S && S.seg[0];
+  if(!g.children.length){
+    g.innerHTML = palettes.map((n,i)=>`<button class="pal" data-pal="${i}" aria-pressed="${i===cur}"><i></i><span>${palName(i)}</span></button>`).join('');
+    g.addEventListener('click', e => {
+      const b = e.target.closest('[data-pal]'); if(!b || !S) return;
+      const id = +b.dataset.pal; S.seg[0].pal = id; syncParams(); orbFromState();
+      send({seg:[{id:0, pal:id}]});
+    });
+  }
+  const act = g.querySelector('[aria-pressed="true"]'); if(act && !g.dataset.scrolled){ g.dataset.scrolled=1; g.scrollLeft = Math.max(0, act.offsetLeft-16); }
+  g.querySelectorAll('[data-pal]').forEach(b => { const css = paletteCSS(+b.dataset.pal, sg); if(css) b.firstChild.style.background = 'linear-gradient(90deg,'+css+')'; });
+}
+
+function esc(s){ return String(s).replace(/[&<>"]/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+
+/* ---------- night light ---------- */
+const NL = [3,5,15,30,60];
+$('#nlOpts').innerHTML = NL.map(m=>`<button class="btn" data-nl="${m}" aria-pressed="false" aria-label="Fade off in ${m} minutes">${m} min</button>`).join('');
+function setPop(open){ $('#nlPop').hidden = !open; $('#nlPill').setAttribute('aria-expanded', open); }
+$('#nlPill').addEventListener('click', e => { e.stopPropagation(); setPop($('#nlPop').hidden); });
+document.addEventListener('click', e => { if(!$('#nlPop').hidden && !e.target.closest('#nlPop')) setPop(false); });
+$('#nlOpts').addEventListener('click', e => {
+  const b = e.target.closest('[data-nl]'); if(!b || !S) return;
+  const m = +b.dataset.nl;
+  send({on:true, nl:{on:true, dur:m, mode:1, tbri:0}});
+  nlEnd = Date.now() + m*60000; nlLock = Date.now() + 4000;
+  S.on=true; S.nl = Object.assign({}, S.nl, {on:true, dur:m, rem:m*60}); onState(S); setPop(false);
+  toast('The lamp will fade off in '+m+' min');
+});
+$('#nlCancel').addEventListener('click', () => { if(!S) return; send({nl:{on:false}}); S.nl.on=false; renderTimer(); setPop(false); toast('Sleep timer canceled'); });
+
+function renderTimer(){
+  if(!S || !S.nl) return;
+  const on = S.nl.on && S.on;
+  if(!on) nlEnd = 0;
+  else if(!nlEnd) nlEnd = Date.now() + (S.nl.rem>0 ? S.nl.rem : S.nl.dur*60)*1000;
+  document.querySelectorAll('[data-nl]').forEach(b => b.setAttribute('aria-pressed', on && +b.dataset.nl===S.nl.dur));
+  const rem = Math.max(0, Math.round((nlEnd-Date.now())/1000));
+  $('#nlCancel').hidden = !on;
+  $('#nlPill').classList.toggle('on', on);
+  $('#nlText').textContent = on ? Math.floor(rem/60)+':'+String(rem%60).padStart(2,'0') : 'Sleep timer';
+  $('#nlPill').setAttribute('aria-label', on ? 'Sleep timer, '+Math.ceil(rem/60)+' minutes left' : 'Sleep timer');
+}
+
+/* ---------- toast ---------- */
+let tt; function toast(t){ const el=$('#toast'); el.textContent=t; el.classList.add('show'); clearTimeout(tt); tt=setTimeout(()=>el.classList.remove('show'), 2200); }
+
+/* ---------- boot ---------- */
+if(navigator.standalone) document.documentElement.classList.add('standalone');
+(async function boot(){
+  renderRecent(); renderTiles();
+  const tab = store.get('tab','color'); const tb = document.querySelector(`[data-tab="${tab}"]`); if(tb) tb.click();
+  try{
+    const j = await getJSON('/json');
+    effects = j.effects||[]; palettes = j.palettes||[];
+    onInfo(j.info);
+    try{ fxdata = await getJSON('/json/fxdata'); }catch(e){ fxdata=[]; }
+    renderFx(); renderRecent(); onState(j.state); setConn('ok','Connected');
+  }catch(e){
+    setConn('bad','Offline');
+  }
+  connectWS();
+  setTimeout(loadPalettes, 2000);   // palette previews, fetched slowly so the ESP8266 stays responsive
+  // tick the night-light countdown locally between updates
+  setInterval(()=>{ if(S && S.nl && S.nl.on) renderTimer(); if(Date.now()-liveAt>3000) orbFromState(); }, 1000);
+})();
+window.__lamp = { onLive, onState: s=>onState(s) };
+})();
+</script>
+</body>
+</html>
