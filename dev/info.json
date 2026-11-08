@@ -1,0 +1,50 @@
+{
+ "ver": "0.13.3",
+ "vid": 2208222,
+ "leds": {
+  "count": 88,
+  "pwr": 2491,
+  "fps": 3,
+  "maxpwr": 2500,
+  "maxseg": 16,
+  "seglc": [
+   1
+  ],
+  "lc": 1,
+  "rgbw": false,
+  "wv": 0,
+  "cct": 0
+ },
+ "str": false,
+ "name": "INTELLECT ",
+ "udpport": 21324,
+ "live": false,
+ "liveseg": -1,
+ "lm": "",
+ "lip": "",
+ "ws": 0,
+ "fxcount": 118,
+ "palcount": 71,
+ "wifi": {
+  "bssid": "AA:BB:CC:DD:EE:01",
+  "rssi": -56,
+  "signal": 88,
+  "channel": 3
+ },
+ "fs": {
+  "u": 20,
+  "t": 131,
+  "pmt": 1794069720
+ },
+ "ndc": 0,
+ "arch": "esp8266",
+ "core": "2_7_4_7",
+ "lwip": 1,
+ "freeheap": 21128,
+ "uptime": 12928,
+ "opt": 110,
+ "brand": "WLED",
+ "product": "FOSS",
+ "mac": "aabbccddeeff",
+ "ip": "192.168.1.133"
+}
