@@ -278,6 +278,7 @@
   "Check for updates automatically": "Проверять обновления автоматически",
   "Once a day, from GitHub. Nothing about your lamp is sent.": "Раз в день, на GitHub. Никакие данные о лампе не отправляются.",
   "Updates from": "Источник обновлений",
+  "Get updates from {}? Only for testing your own build.": "Получать обновления с {}? Только для проверки своей сборки.",
   "Downloading the new version…": "Скачиваю новую версию…",
   "Couldn’t download the update. Check the phone’s internet, then try again.": "Не удалось скачать обновление. Проверьте интернет на телефоне и попробуйте ещё раз.",
   "Couldn’t reach the lamp. Check that it’s on, then try again.": "Лампа не отвечает. Проверьте, что она включена, и попробуйте ещё раз.",

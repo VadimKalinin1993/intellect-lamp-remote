@@ -165,7 +165,8 @@ background:linear-gradient(90deg,rgba(var(--lamp),.9) 0 calc(var(--pad)*2 + var(
    translates the page in place. Keys are the English text; {} in a key stands for a number or a name. */
 (()=>{
 const q=new URLSearchParams(location.search),de=document.documentElement,
-  host=q.get('host')||(/^https?:$/.test(location.protocol)&&location.host)||'';
+  dev=!/^https?:$/.test(location.protocol)||/^(localhost|127\.0\.0\.1|\[::1\])$/.test(location.hostname),
+  host=(dev&&q.get('host'))||(/^https?:$/.test(location.protocol)&&location.host)||'';
 let c=q.get('lang');try{c=c||JSON.parse(localStorage.getItem('lamp.lang'))}catch(e){}
 c=c||(navigator.language||'').slice(0,2);
 if(c=='en'||!/^[a-z]{2}$/.test(c)||!(host||q.has('demo'))||!window.DecompressionStream)return;
@@ -195,7 +196,9 @@ function apply(j){
 (()=>{'use strict';
 const $=s=>document.querySelector(s),qs=new URLSearchParams(location.search),DEMO=qs.has('demo');
 const st=k=>{try{return JSON.parse(localStorage.getItem('lamp.'+k))}catch(e){}};
-const HOST=qs.get('host')||(!DEMO&&/^https?:$/.test(location.protocol)&&location.host?location.host:st('host')||'4.3.2.1');
+/* ?host= only on a page opened from a file or a local server: served by the lamp, the page always talks to that lamp */
+const DEVPAGE=!/^https?:$/.test(location.protocol)||/^(localhost|127\.0\.0\.1|\[::1\])$/.test(location.hostname),QHOST=DEVPAGE?qs.get('host'):null;
+const HOST=QHOST||(!DEMO&&/^https?:$/.test(location.protocol)&&location.host?location.host:st('host')||'4.3.2.1');
 const DEV={'/json/cfg':'cfg','/json/info':'info','/json/state':'state','/presets.json':'presets','/json/eff':'eff','/json/pal':'pal'};
 const api=(p,o)=>DEMO?(o?new Promise(r=>setTimeout(()=>r({ok:1,json:()=>({})}),500)):fetch('dev/'+DEV[p]+'.json')):fetch('http://'+HOST+p,Object.assign({cache:'no-store'},o));
 const getJ=async p=>{const r=await api(p);if(!r.ok)throw r;return r.json()};
@@ -297,11 +300,16 @@ const TZ=['GMT (UTC)','GMT/BST (UK)','CET/CEST (Central Europe)','EET/EEST (East
 const LANGS=[['','Same as this phone'],['en','English'],['ru','Русский'],['uk','Українська']];
 /* Updates of the remote and these settings (WLED itself is separate). build.py writes the version here
    and dist/version.json on GitHub. Settings → Software checks it; with auto-check on, the pages look
-   once a day, quietly. Nothing about the lamp is sent. ?updsrc=URL points to another dist/ folder (a fork,
-   or tools/serve_dist.py for testing) and is remembered; ?updsrc= goes back to GitHub. */
+   once a day, quietly. Nothing about the lamp is sent. ?updsrc=URL points to another dist/ folder for testing
+   (tools/serve_dist.py on a computer at home) and is remembered after a confirmation; ?updsrc= goes back to GitHub.
+   Only this repository on GitHub and addresses on the home network are accepted, so a link from the internet
+   can't make the lamp install someone else's pages. */
 const VER='__VER__',VDATE='__DATE__',VDEV=VER[0]=='_';
-{const s=qs.get('updsrc');if(s!=null)s?localStorage.setItem('lamp.updsrc',JSON.stringify(s)):localStorage.removeItem('lamp.updsrc')}
-const SRC0='https://raw.githubusercontent.com/VadimKalinin1993/intellect-lamp-remote/main/dist/',SRC=(/^https?:\/\/\w/.test(st('updsrc'))?st('updsrc'):SRC0).replace(/\/*$/,'/');
+const okSrc=u=>typeof u=='string'&&(/^https:\/\/raw\.githubusercontent\.com\/VadimKalinin1993\/intellect-lamp-remote\/[^?#]*$/.test(u)||/^http:\/\/(localhost|127\.0\.0\.1|10(\.\d{1,3}){3}|192\.168(\.\d{1,3}){2}|172\.(1[6-9]|2\d|3[01])(\.\d{1,3}){2})(:\d+)?\/[^?#]*$/.test(u));
+{const s=qs.get('updsrc');
+  if(s==='')localStorage.removeItem('lamp.updsrc');
+  else if(s!=null&&s!==st('updsrc')&&okSrc(s.replace(/\/*$/,'/'))&&(DEMO||window.confirm((window.T||String)('Get updates from '+s+'? Only for testing your own build.'))))localStorage.setItem('lamp.updsrc',JSON.stringify(s))}
+const SRC0='https://raw.githubusercontent.com/VadimKalinin1993/intellect-lamp-remote/main/dist/',SRC=(okSrc(st('updsrc'))?st('updsrc'):SRC0).replace(/\/*$/,'/');
 const LANG_URL=new URL('../lang/',SRC).href;
 const myLang=()=>st('lang')||'';
 let LF=null;
@@ -577,7 +585,7 @@ function render(){
   if(!C){m.innerHTML=`<h1>Settings</h1><div class="list" style="margin-top:22px">${'<div class="sk"></div>'.repeat(5)}</div>`;return}
   const inSec=V[view];
   $('#backT').textContent=inSec||view=='joined'?'Settings':'Lamp';
-  $('#back').href=inSec||view=='joined'?'#home':('app.htm'+(qs.get('host')?'?host='+encodeURIComponent(HOST):''));
+  $('#back').href=inSec||view=='joined'?'#home':('app.htm'+(QHOST?'?host='+encodeURIComponent(HOST):''));
   m.innerHTML=`<div class="view">${view=='recovery'?recovery():view=='joined'?joined():view=='lang'?language():inSec?section(view):'<h1>Settings</h1>'+home()}</div>`;
   document.title=(window.T||String)(inSec?V[view].t:'Lamp settings');
   m.querySelectorAll('.range').forEach(enh);

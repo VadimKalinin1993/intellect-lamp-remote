@@ -13,7 +13,7 @@ blocks), so dist/ holds the same pages, each still ONE file with the same name:
 index.htm is optional: a tiny redirect so http://LAMP-ADDRESS/ opens the remote (and Settings when
 the lamp runs its backup access point at 4.3.2.1). Without it the stock WLED page stays at /.
 lang/xx.json -> lang/lang-xx.json.gz (committed; Settings -> Language downloads it from GitHub).
-The icon goes through pngquant when it is installed and is copied unchanged otherwise.
+icon.png is committed already compressed and is copied unchanged, so the build needs no image tools.
 
 Version: a short hash of the sources (app.htm, setup.htm, icon.png, lang/xx.json) plus the build date.
 It replaces __VER__ / __DATE__ in both pages (the unbuilt sources show "dev") and goes into
@@ -32,6 +32,8 @@ import argparse, datetime, gzip, hashlib, json, pathlib, re, shutil, subprocess,
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 DIST = ROOT / "dist"
 PAGES = ["app.htm", "setup.htm"]
+# pinned, so the same sources always give the same dist/ (a newer terser minifies a little differently)
+TERSER = "terser@5.51.2"
 
 
 def css(s):
@@ -44,7 +46,7 @@ def css(s):
 
 def js(s):
     out = subprocess.run(
-        ["npx", "-y", "terser@5", "--compress", "--mangle", "--ecma", "2020"],
+        ["npx", "-y", TERSER, "--compress", "--mangle", "--ecma", "2020"],
         input=s, capture_output=True, text=True, check=True,
     )
     return out.stdout.strip()
@@ -146,10 +148,7 @@ def main():
         print(f"{name}: {src.stat().st_size:,} bytes -> dist/{name} {len(shell.encode()):,} (gzip {len(gz):,} inside)")
     (dist / "index.htm").write_text(INDEX)
     icon = dist / "icon.png"
-    if shutil.which("pngquant"):
-        subprocess.run(["pngquant", "--force", "--quality=80-95", "--output", str(icon), str(ROOT / "icon.png")], check=True)
-    else:
-        shutil.copy(ROOT / "icon.png", icon)
+    shutil.copy(ROOT / "icon.png", icon)
     print(f"icon.png: {(ROOT / 'icon.png').stat().st_size:,} -> {icon.stat().st_size:,} bytes")
     # language files: lang/xx.json -> lang/lang-xx.json.gz (committed: Settings -> Language downloads it)
     for src in sorted((ROOT / "lang").glob("[a-z][a-z].json")):

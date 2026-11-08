@@ -349,16 +349,22 @@ const store = {
 // Where the lamp is: ?host=… → the page's own host (when served by the lamp) → saved/default address.
 /* joined the lamp's own recovery hotspot: go straight to the screen that reconnects it */
 if(location.hostname==='4.3.2.1'){ location.replace('setup.htm'); }
-const HOST = qs.get('host') || (/^https?:$/.test(location.protocol) && location.host ? location.host : store.get('host','192.168.1.133'));
+/* ?host= is only for development (a page opened from a file or a local server). When the lamp serves
+   the page, the page always talks to that lamp, so a link can't point it at another device. */
+const DEVPAGE = !/^https?:$/.test(location.protocol) || /^(localhost|127\.0\.0\.1|\[::1\])$/.test(location.hostname);
+const QHOST = DEVPAGE ? qs.get('host') : null;
+const HOST = QHOST || (/^https?:$/.test(location.protocol) && location.host ? location.host : store.get('host','192.168.1.133'));
 const BASE = 'http://' + HOST;
-if(qs.get('host')) $('#setPill').href = 'setup.htm?host=' + encodeURIComponent(HOST);
+if(QHOST) $('#setPill').href = 'setup.htm?host=' + encodeURIComponent(HOST);
 
 /* ---------- updates ----------
    build.py writes the version below. Once a day (unless turned off in Settings → Software) the page asks
    GitHub for dist/version.json, quietly and well after the lamp has loaded; nothing about the lamp is sent.
    A newer version puts a dot on Settings. Settings sets the source (?updsrc=) and installs the update. */
 const APPV = '__VER__', APPD = '__DATE__';
-const UPDSRC = (/^https?:\/\/\w/.test(store.get('updsrc','')) ? store.get('updsrc') : 'https://raw.githubusercontent.com/VadimKalinin1993/intellect-lamp-remote/main/dist/').replace(/\/*$/,'/');
+/* updates come only from this repository on GitHub, or from a computer on the home network (tools/serve_dist.py) */
+const okSrc = u => typeof u == 'string' && (/^https:\/\/raw\.githubusercontent\.com\/VadimKalinin1993\/intellect-lamp-remote\/[^?#]*$/.test(u)||/^http:\/\/(localhost|127\.0\.0\.1|10(\.\d{1,3}){3}|192\.168(\.\d{1,3}){2}|172\.(1[6-9]|2\d|3[01])(\.\d{1,3}){2})(:\d+)?\/[^?#]*$/.test(u));
+const UPDSRC = (okSrc(store.get('updsrc','')) ? store.get('updsrc') : 'https://raw.githubusercontent.com/VadimKalinin1993/intellect-lamp-remote/main/dist/').replace(/\/*$/,'/');
 function updDot(){
   const x = store.get('update',{}), l = x.latest, sp = $('#setPill'),
     n = !!l && x.src===UPDSRC && l.v!==APPV && l.date>=APPD && /setup\.htm/.test(sp.href);

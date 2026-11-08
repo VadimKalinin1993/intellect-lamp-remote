@@ -151,11 +151,11 @@ Open `http://LAMP-ADDRESS/edit`, right-click `app.htm` (and `icon.png`, `setup.h
 ## For developers
 
 - `app.htm` and `setup.htm` in the repository root are the readable sources; edit those. Each still works on its own if uploaded, but together they're too big for the lamp.
-- `python3 tools/build.py` writes `dist/`: the same pages minified and gzipped into compact single files (needs Node for `npx terser`; `pngquant` shrinks the icon if installed). It also rebuilds `lang/lang-*.json.gz`.
+- `python3 tools/build.py` writes `dist/`: the same pages minified and gzipped into compact single files (needs Node for `npx terser`; the version is pinned in `build.py`, so the same sources give the same files). It also rebuilds `lang/lang-*.json.gz`.
 - Translations live in `tools/translations.py`; `python3 tools/make_lang.py` writes `lang/*.json` and reports phrases that no longer exist in the pages. Then run `build.py`.
 - Open `setup.htm?demo` from a local web server (for example `python3 -m http.server` in the repository root) to try the settings with the demo data in `dev/`, without a lamp.
 - `python3 tools/upload.py LAMP-ADDRESS` uploads `dist/` to a lamp and verifies every file.
-- `build.py` also stamps a version (a short hash of the sources plus the build date) into both pages and writes `dist/version.json`, which **Settings → Software** reads from GitHub to offer updates. To try an update on a lamp without GitHub, run `python3 tools/serve_dist.py --test` (it serves a build that differs only in its version, with CORS) and open the printed `http://LAMP-ADDRESS/setup.htm?updsrc=…` address; `?updsrc=` goes back to GitHub.
+- `build.py` also stamps a version (a short hash of the sources plus the build date) into both pages and writes `dist/version.json`, which **Settings → Software** reads from GitHub to offer updates. To try an update on a lamp without GitHub, run `python3 tools/serve_dist.py --test` (it serves a build that differs only in its version, with CORS) and open the printed `http://LAMP-ADDRESS/setup.htm?updsrc=…` address and confirm; `?updsrc=` goes back to GitHub. For safety, updates are only accepted from this repository or from an address on the home network, and `?host=` works only on a page opened from a file or a local server.
 
 ## Files
 
