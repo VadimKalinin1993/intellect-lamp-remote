@@ -46,24 +46,40 @@ body::after{content:"";position:fixed;left:0;right:0;top:0;height:env(safe-area-
 
 /* top bar */
 .top{position:relative;z-index:20}
-.pills{overflow-x:auto;scrollbar-width:none;margin:0 -18px;padding:2px 18px}
+/* Wi-Fi status left, the pills centred between, a settings gear right */
+.bar{display:flex;align-items:center;gap:8px}
+.pills{flex:1;min-width:0;overflow-x:auto;scrollbar-width:none;padding:2px}
+/* the scroller clips anything past its 2px padding: keep the pills' focus ring tight */
+.pills :focus-visible{outline-offset:0}
 .pills-in{display:flex;gap:8px;width:max-content;margin:0 auto}
 .pills::-webkit-scrollbar{display:none}
 .pill{flex:none;display:inline-flex;align-items:center;gap:7px;height:32px;padding:0 13px 0 11px;border:0;border-radius:16px;font-size:13.5px;font-weight:600;color:var(--muted);background:var(--panel);box-shadow:0 0 0 1px var(--line) inset;white-space:nowrap}
-button.pill{color:var(--text)}
+button.pill,a.pill{color:var(--text)}
+a.pill[aria-disabled="true"]{opacity:.4;pointer-events:none}
+a.pill{text-decoration:none}
 .pill[aria-expanded="true"]{background:var(--panel-2)}
 .pill.on{color:rgb(var(--lamp));color:color-mix(in srgb, rgb(var(--lamp)) 55%, #fff);box-shadow:0 0 0 1.5px rgba(var(--lamp),.6) inset;font-variant-numeric:tabular-nums}
 .pdot{width:14px;height:14px;border-radius:50%;flex:none;box-shadow:0 0 0 1px rgba(255,255,255,.2) inset}
 .pdot.multi{background:conic-gradient(#ff5e5e,#ffd25e,#6dff8a,#5ee6ff,#6b7bff,#e05eff,#ff5e5e)}
 .pill .pm{color:var(--muted);font-weight:500}
+.pill svg{color:rgb(var(--lamp));flex:none}
+/* a newer version of these pages is on GitHub: a tiny dot on Settings (Settings → Software installs it) */
+#setPill{position:relative;width:32px;padding:0;justify-content:center}
+#setPill svg{color:var(--muted)}
+#setPill.upd::after{content:"";position:absolute;top:3px;right:3px;width:7px;height:7px;border-radius:50%;background:rgb(var(--lamp));box-shadow:0 0 0 2px var(--panel),0 0 6px rgba(var(--lamp),.7)}
 .pop{position:absolute;left:0;right:0;top:44px;background:#252130;border-radius:20px;padding:14px;box-shadow:0 0 0 1px var(--line) inset,0 20px 40px rgba(0,0,0,.55)}
 .pop .opts{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin-top:12px}
 .pop .opts .btn{padding:10px 0}
 .pop .opts .btn[aria-pressed="true"]{background:rgb(var(--lamp));color:#1a1520}
 .link{border:0;background:none;padding:0;font-size:14px;font-weight:600;color:rgb(var(--lamp))}
-.dot{width:8px;height:8px;border-radius:50%;background:#6b6577}
-.conn.ok .dot{background:#7be0a2;box-shadow:0 0 10px #7be0a288}
-.conn.bad .dot{background:var(--danger)}
+/* connection: a Wi-Fi glyph only (grey = connecting, green = connected, red + slash = offline); the word stays for screen readers and the tooltip */
+.conn{position:relative;width:32px;padding:0;justify-content:center}
+.conn svg{color:#6b6577}
+.conn.ok svg{color:#7be0a2;filter:drop-shadow(0 0 4px #7be0a288)}
+.conn.bad svg{color:var(--danger)}
+.conn .x{display:none}
+.conn.bad .x{display:inline}
+.vh{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
 
 /* the orb */
 .stage{display:grid;place-items:center;padding:22px 0 10px}
@@ -102,6 +118,12 @@ button.pill{color:var(--text)}
   color:rgba(255,255,255,.9);filter:drop-shadow(0 1px 5px rgba(0,0,0,.35));transition:color .3s,filter .3s;
 }
 .orb.off .orb-label{color:rgba(243,239,247,.62);filter:none}
+/* lamp off: a quiet invitation on the orb, the rest of the controls step back */
+.orb-hint{position:absolute;left:0;right:0;top:calc(50% + 32px);z-index:2;text-align:center;font-size:13px;font-weight:600;color:rgba(243,239,247,.72);opacity:0;transform:translateY(-4px);transition:opacity .3s,transform .3s;pointer-events:none}
+.orb.off .orb-hint{opacity:1;transform:none}
+.orb.off{animation:invite 2.8s ease-in-out infinite}
+@keyframes invite{50%{box-shadow:0 0 0 1px rgba(255,255,255,.1) inset,0 0 0 9px rgba(255,255,255,.05),0 30px 60px -30px #000}}
+body.is-off .bri .slider,body.is-off .tiles,body.is-off .fx-grid,body.is-off .custom,body.is-off #allBox{opacity:.42;filter:saturate(.35);transition:opacity .3s,filter .3s}
 
 /* brightness */
 .bri{margin:18px 0 6px}
@@ -233,7 +255,7 @@ body.is-off .seg button.mode .md{opacity:.35;box-shadow:none}
 .toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom));transform:translate(-50%,20px);opacity:0;background:#2f2a3b;padding:10px 16px;border-radius:14px;font-size:14px;transition:.25s;pointer-events:none;z-index:10;box-shadow:0 10px 30px rgba(0,0,0,.5)}
 .toast.show{opacity:1;transform:translate(-50%,0)}
 
-@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 @media (min-width:700px){.app{padding-top:40px}}
 @media (min-width:700px) and (display-mode:standalone){.app{padding-top:calc(env(safe-area-inset-top,0px) + 40px)}}
 </style>
@@ -241,15 +263,18 @@ body.is-off .seg button.mode .md{opacity:.35;box-shadow:none}
 <body>
 <div class="app">
   <header class="top">
+    <div class="bar">
+      <div class="pill conn" id="conn" role="status" title="Connecting…"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M2.5 9a14 14 0 0 1 19 0M5.5 12.5a9.5 9.5 0 0 1 13 0M8.8 16a4.8 4.8 0 0 1 6.4 0"/><circle cx="12" cy="19.5" r="1" fill="currentColor" stroke="none"/><path class="x" d="M4 3l16 18"/></svg><span class="vh" id="connText">Connecting…</span></div>
     <div class="pills">
       <div class="pills-in">
-        <div class="pill conn" id="conn" role="status"><span class="dot"></span><span id="connText">Connecting…</span></div>
         <button class="pill" id="nlPill" aria-haspopup="true" aria-expanded="false" aria-controls="nlPop">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"/></svg>
           <span id="nlText">Sleep timer</span>
         </button>
         <button class="pill" id="recentPill" hidden></button>
       </div>
+    </div>
+      <a class="pill" id="setPill" href="setup.htm" aria-label="Settings" title="Settings"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg></a>
     </div>
     <div class="pop" id="nlPop" hidden>
       <div class="row" style="margin:0"><span class="label">Fade off in</span><button class="link" id="nlCancel" hidden>Cancel timer</button></div>
@@ -258,7 +283,7 @@ body.is-off .seg button.mode .md{opacity:.35;box-shadow:none}
   </header>
 
   <section class="stage">
-    <button class="orb off" id="orb" aria-pressed="false" aria-label="Turn the lamp on"><span class="core" aria-hidden="true"></span><span class="orb-label" id="orbLabel"><svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 3v8"/><path d="M6.4 6.6a8 8 0 1 0 11.2 0"/></svg></span></button>
+    <button class="orb off" id="orb" aria-pressed="false" aria-label="Turn the lamp on"><span class="core" aria-hidden="true"></span><span class="orb-label" id="orbLabel"><svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 3v8"/><path d="M6.4 6.6a8 8 0 1 0 11.2 0"/></svg></span><span class="orb-hint" aria-hidden="true">Tap to turn on</span></button>
   </section>
 
   <section class="bri">
@@ -322,8 +347,33 @@ const store = {
   set(k, v){ try{ localStorage.setItem('lamp.'+k, JSON.stringify(v)) }catch(e){} }
 };
 // Where the lamp is: ?host=… → the page's own host (when served by the lamp) → saved/default address.
+/* joined the lamp's own recovery hotspot: go straight to the screen that reconnects it */
+if(location.hostname==='4.3.2.1'){ location.replace('setup.htm'); }
 const HOST = qs.get('host') || (/^https?:$/.test(location.protocol) && location.host ? location.host : store.get('host','192.168.1.133'));
 const BASE = 'http://' + HOST;
+if(qs.get('host')) $('#setPill').href = 'setup.htm?host=' + encodeURIComponent(HOST);
+
+/* ---------- updates ----------
+   build.py writes the version below. Once a day (unless turned off in Settings → Software) the page asks
+   GitHub for dist/version.json, quietly and well after the lamp has loaded; nothing about the lamp is sent.
+   A newer version puts a dot on Settings. Settings sets the source (?updsrc=) and installs the update. */
+const APPV = '__VER__', APPD = '__DATE__';
+const UPDSRC = (/^https?:\/\/\w/.test(store.get('updsrc','')) ? store.get('updsrc') : 'https://raw.githubusercontent.com/VadimKalinin1993/intellect-lamp-remote/main/dist/').replace(/\/*$/,'/');
+function updDot(){
+  const x = store.get('update',{}), l = x.latest, sp = $('#setPill'),
+    n = !!l && x.src===UPDSRC && l.v!==APPV && l.date>=APPD && /setup\.htm/.test(sp.href);
+  sp.classList.toggle('upd', n);
+  sp.setAttribute('aria-label', n ? 'Settings, update available' : 'Settings');
+}
+function checkUpd(){
+  const x = store.get('update',{});
+  if(APPV[0]==='_' || store.get('autoupd',true)===false || (x.src===UPDSRC && Date.now()-x.checked < 864e5)) return;
+  fetch(UPDSRC+'version.json', {cache:'no-store'})
+    .then(r => r.ok ? r.json() : r.status===404 ? null : Promise.reject())
+    .then(j => { store.set('update', {checked:Date.now(), src:UPDSRC, latest:j&&j.v ? j : null}); updDot(); })
+    .catch(()=>{});
+}
+updDot();
 
 /* ---------- curated effects (names as WLED reports them) ---------- */
 // Scenes: hand-tuned recipes (effect + palette + speed) that look calm on a diffused lamp.
@@ -356,7 +406,11 @@ let effects = [], palettes = [], fxdata = [], palColors = {};
 let ws = null, wsOk = false, lastMsg = 0, liveAt = 0, pollT = null, dragging = null;
 
 /* ---------- transport ---------- */
-function setConn(kind, text){ const c=$('#conn'); c.className='pill conn '+kind; $('#connText').textContent=text; }
+function setConn(kind, text){ const c=$('#conn'); c.className='pill conn '+kind; c.title=text; $('#connText').textContent=text;
+  const sp=$('#setPill'); if(kind==='ok') sp.removeAttribute('aria-disabled'); else sp.setAttribute('aria-disabled','true');
+  /* no setup.htm on the lamp (only the remote was uploaded): Settings opens the stock WLED settings */
+  if(kind==='ok' && !setupChecked){ setupChecked=1; fetch(sp.href,{method:'HEAD',cache:'no-store'}).then(r=>{ if(!r.ok){ sp.href=BASE+'/settings'; updDot(); } }).catch(()=>{}); } }
+let setupChecked = 0;
 async function getJSON(path){
   const r = await fetch(BASE+path, {cache:'no-store'});
   if(!r.ok) throw new Error(r.status);
@@ -422,13 +476,20 @@ function drawLive(){
   stops.push(stops[0]);
   setOrb('conic-gradient('+stops.join(',')+')', [R/steps,G/steps,B/steps], true);
 }
+/* the lamp's colour tints the accents; remembered so the settings page opens in the same colour */
+var lampAcc = '', lampAccAt = 0;
+function setLamp(rgb){
+  const v = rgb.join(',');
+  document.documentElement.style.setProperty('--lamp', v);
+  if(v !== lampAcc && Date.now() - lampAccAt > 1000){ lampAcc = v; lampAccAt = Date.now(); store.set('accent', v); }
+}
 function setOrb(bg, rgb, live){
   const orb = $('#orb');
   orb.style.setProperty('--leds', bg);
   // normalise the glow colour so dim LEDs still tint the room
   const m = Math.max(rgb[0],rgb[1],rgb[2],1), k = 255/m;
   const c = rgb.map(v=>Math.round(Math.min(255, v*k)));
-  if(m>8 || !live) document.documentElement.style.setProperty('--lamp', c.join(','));
+  if(m>8 || !live) setLamp(c);
 }
 function orbFromState(){
   if(!S || Date.now()-liveAt < 2500) return;
@@ -625,7 +686,7 @@ function setColor(rgb, final){
   if(S){
     const wasScene = S.seg[0].fx !== 0;
     S.seg[0].col[0] = rgb; S.seg[0].fx = 0; S.on = true;
-    document.documentElement.style.setProperty('--lamp', rgb.join(','));
+    setLamp(rgb);
     if(final || wasScene) onState(S);
   }
   throttled('col', () => send({on:true, seg:[{id:0, fx:0, col:[rgb]}]}));
@@ -900,6 +961,7 @@ if(navigator.standalone) document.documentElement.classList.add('standalone');
   }
   connectWS();
   setTimeout(loadPalettes, 2000);   // palette previews, fetched slowly so the ESP8266 stays responsive
+  setTimeout(checkUpd, 8000);       // GitHub, not the lamp, but still well after the remote is up
   // tick the night-light countdown locally between updates
   setInterval(()=>{ if(S && S.nl && S.nl.on) renderTimer(); if(Date.now()-liveAt>3000) orbFromState(); }, 1000);
 })();
