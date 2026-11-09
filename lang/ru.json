@@ -486,6 +486,9 @@
   "Weekdays": "Будни",
   "Weekends": "Выходные",
   "paused": "на паузе",
-  "The lamp takes the time from the internet and from your phone. Schedules need it.": "Лампа берёт время из интернета и с телефона. Оно нужно для расписания."
+  "The lamp takes the time from the internet and from your phone. Schedules need it.": "Лампа берёт время из интернета и с телефона. Оно нужно для расписания.",
+  "Maintenance": "Обслуживание",
+  "Updates, backup, restart": "Обновления, бэкап, перезапуск",
+  "Reboot": "Перезагрузка"
  }
 }

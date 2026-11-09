@@ -16,7 +16,7 @@
 - **Settings**: Wi‑Fi, a backup access point, schedules, Siri and more, in plain words (see [Settings](#settings)).
 - **Home Screen app**: has its own icon and opens full screen, like a native app.
 
-Nothing is sent to the internet. The app talks only to your lamp, over your home network. (Two exceptions, both downloads from this page: installing a [language](#languages), and a check for a new version once a day, which you can switch off in **Settings → Updates**. Nothing about your lamp is sent.)
+Nothing is sent to the internet. The app talks only to your lamp, over your home network. (Two exceptions, both downloads from this page: installing a [language](#languages), and a check for a new version once a day, which you can switch off in **Settings → Maintenance**. Nothing about your lamp is sent.)
 
 ## What you need
 
@@ -80,7 +80,7 @@ Saved custom colors and the language are kept per device, in that phone's browse
 Tap **Settings** at the top of the remote. Everyday things come first, in plain words, grouped without headings:
 
 - **Behavior** (power on, color changes and the schedule), **Sync with other lamps**, **Smart home & Siri** (ready-made Siri Shortcuts addresses for on/off, brightness, your colors and scenes, plus Alexa, Philips Hue and MQTT);
-- **Wi‑Fi** (the backup access point is inside it, see below), **Language**, **Lamp name**, **Updates**, **Backup** (download and restore settings and scenes), **Restart**;
+- **Wi‑Fi** (the backup access point is inside it, see below), **Language**, **Lamp name**, **Maintenance** (updates, backup of settings and scenes, restart);
 - **Other**, folded away under a button: hardware (LEDs, wiring and the power supply limit), WLED's built-in sleep timer, light shows, WLED firmware, security and the classic WLED pages.
 
 Changes are saved to the lamp itself, the same settings the stock WLED pages edit. The stock pages stay at `http://LAMP-ADDRESS/settings` if you ever need them.
@@ -101,9 +101,9 @@ The whole app, the remote and the settings, can be switched to **Russian** or **
 
 ## Updating
 
-**From the phone:** open **Settings → Updates** and tap **Check for updates**, then **Update**. The phone downloads the new files from this page, saves them on the lamp one by one, checks each one, and reloads. Keep the page open until it's done. If something fails, don't close the page: tap **Try again**. Installed languages are updated too.
+**From the phone:** open **Settings → Maintenance** and tap **Check for updates**, then **Update**. The phone downloads the new files from this page, saves them on the lamp one by one, checks each one, and reloads. Keep the page open until it's done. If something fails, don't close the page: tap **Try again**. Installed languages are updated too.
 
-The remote and the settings also look for a new version on their own, once a day and quietly, a few seconds after they open: a small dot appears on **Settings** and an **Update available** banner at the top of the settings. They only download a small `version.json` from this page; nothing about your lamp is sent. You can switch this off in **Settings → Updates**.
+The remote and the settings also look for a new version on their own, once a day and quietly, a few seconds after they open: a small dot appears on **Settings** and an **Update available** banner at the top of the settings. They only download a small `version.json` from this page; nothing about your lamp is sent. You can switch this off in **Settings → Maintenance**.
 
 **By hand:** download the new files and upload `app.htm` (and `setup.htm`, if you use the settings) from the `dist` folder through `http://LAMP-ADDRESS/edit` again. They replace the old ones. If you already have the remote, re-uploading `app.htm` is enough; without `setup.htm`, the gear opens the stock WLED settings. If the icon changed too, upload the new `icon.png`, then remove the Home Screen shortcut and add it again (phones cache the icon).
 
@@ -128,7 +128,7 @@ A change merged on GitHub doesn't reach any lamp by itself: every lamp owner upl
 
 If something failed, run the same command again: it's safe to repeat. If the remote page is broken after a failed run, `setup.htm` is uploaded first, so `http://<lamp address>/setup.htm` still opens. If the script says the files won't fit, tell the owner instead of using `--force`.
 
-After this, updates come straight from the phone: **Settings → Updates → Update** (see [Updating](#updating)).
+After this, updates come straight from the phone: **Settings → Maintenance → Update** (see [Updating](#updating)).
 
 ## Removing
 
@@ -153,7 +153,7 @@ Open `http://LAMP-ADDRESS/edit`, right-click `app.htm` (and `icon.png`, `setup.h
 - Translations live in `tools/translations.py`; `python3 tools/make_lang.py` writes `lang/*.json` and reports phrases that no longer exist in the pages. Then run `build.py`.
 - Open `setup.htm?demo` from a local web server (for example `python3 -m http.server` in the repository root) to try the settings with the demo data in `dev/`, without a lamp.
 - `python3 tools/upload.py LAMP-ADDRESS` uploads `dist/` to a lamp and verifies every file.
-- `build.py` also stamps a version (a short hash of the sources plus the build date) into both pages and writes `dist/version.json`, which **Settings → Updates** reads from GitHub to offer updates. To try an update on a lamp without GitHub, run `python3 tools/serve_dist.py --test` (it serves a build that differs only in its version, with CORS) and open the printed `http://LAMP-ADDRESS/setup.htm?updsrc=…` address and confirm; `?updsrc=` goes back to GitHub. For safety, updates are only accepted from this repository or from an address on the home network, and `?host=` works only on a page opened from a file or a local server.
+- `build.py` also stamps a version (a short hash of the sources plus the build date) into both pages and writes `dist/version.json`, which **Settings → Maintenance** reads from GitHub to offer updates. To try an update on a lamp without GitHub, run `python3 tools/serve_dist.py --test` (it serves a build that differs only in its version, with CORS) and open the printed `http://LAMP-ADDRESS/setup.htm?updsrc=…` address and confirm; `?updsrc=` goes back to GitHub. For safety, updates are only accepted from this repository or from an address on the home network, and `?host=` works only on a page opened from a file or a local server.
 
 ## Files
 

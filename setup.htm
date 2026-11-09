@@ -237,7 +237,7 @@ let C,D,I,PS=[],changed=new Set(),view='';
 const ACC=st('accent');if(ACC)document.documentElement.style.setProperty('--lamp',ACC);
 
 /* ---------- icons ---------- */
-const IC={sun:'M12 8a4 4 0 1 0 0 8a4 4 0 0 0 0-8M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4',restart:'M20 12a8 8 0 1 1-2.34-5.66M20 4v5h-5',wifi:'M5 12.5a10 10 0 0 1 14 0M8.5 16a5 5 0 0 1 7 0M2 9a15 15 0 0 1 20 0M12 19.5h.01',
+const IC={tool:'M14.7 6.3a4 4 0 0 0-5.3 5.3L3.5 17.5a1.4 1.4 0 0 0 2 2l5.9-5.9a4 4 0 0 0 5.3-5.3l-2.4 2.4-2.1-.4-.4-2.1z',sun:'M12 8a4 4 0 1 0 0 8a4 4 0 0 0 0-8M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4',restart:'M20 12a8 8 0 1 1-2.34-5.66M20 4v5h-5',wifi:'M5 12.5a10 10 0 0 1 14 0M8.5 16a5 5 0 0 1 7 0M2 9a15 15 0 0 1 20 0M12 19.5h.01',
 sos:'M12 3a9 9 0 1 0 0 18 9 9 0 1 0 0-18M12 8a4 4 0 1 0 0 8 4 4 0 1 0 0-8M5.6 5.6l3.6 3.6M14.8 14.8l3.6 3.6M18.4 5.6l-3.6 3.6M9.2 14.8l-3.6 3.6',
 tag:'M4 4h7l9 9-7 7-9-9zM8.5 8.5h.01',pow:'M12 3v8M6.4 6.8a8 8 0 1 0 11.2 0',
 moon:'M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z',bolt:'M13 3 5 14h6l-1 7 8-11h-6z',
@@ -365,13 +365,12 @@ nightlight:{t:'Built‑in sleep timer',ic:'moon',d:'Used by the WLED app, a butt
 time:{t:'Time',ic:'clock',v:c=>c.if.ntp.en?'':'Off',d:'The lamp takes the time from the internet and from your phone. Schedules need it.',
  f:[['sw','if.ntp.en','Keep time','Asks a public time server for the current time.'],['s','if.ntp.tz','Time zone',0,TZ],
  ['g','Time server'],['in','if.ntp.host','Server','Change only if your network blocks the default one.',{max:32}]]},
-bak:{t:'Backup',ic:'box',v:()=>'',d:'Download a copy before big changes. If something goes wrong, restore it here.',
- f:[['x','Settings','Everything on this page. Wi‑Fi passwords are not included.',()=>dl('cfg.json')],['x','Scenes','Your saved scenes and presets.',()=>dl('presets.json')],
- ['x','Restore from a file','Pick a file you downloaded. The lamp restarts with it.',()=>pick('.json','Choose file',restore)]]},
-updates:{t:'Updates',ic:'up',v:()=>newer()?'Update available':'',d:'The remote and these settings update from GitHub in a minute.',
- f:[['U']]},
-restart:{t:'Restart',ic:'restart',d:'Takes about 10 seconds. Nothing is lost.',
- f:[['x','Restart the lamp','Takes about 10 seconds. Nothing is lost.',()=>bt('Restart',restart)]]},
+care:{t:'Maintenance',s:'Updates, backup, restart',ic:'tool',v:()=>newer()?'Update available':'',
+ f:[['g','Updates','The remote and these settings update from GitHub in a minute.'],['U'],
+ ['g','Backup','Download a copy before big changes. If something goes wrong, restore it here.'],
+ ['x','Settings','Everything on this page. Wi‑Fi passwords are not included.',()=>dl('cfg.json')],['x','Scenes','Your saved scenes and presets.',()=>dl('presets.json')],
+ ['x','Restore from a file','Pick a file you downloaded. The lamp restarts with it.',()=>pick('.json','Choose file',restore)],
+ ['g','Reboot'],['x','Restart the lamp','Takes about 10 seconds. Nothing is lost.',()=>bt('Restart',restart)]]},
 firmware:{t:'WLED firmware',ic:'up',d:'WLED, the software inside the lamp, comes from the WLED project: install it only if you need a fix.',
  f:[['x','Version',0,(c,i)=>i.ver],['x','Wi‑Fi signal',0,(c,i)=>i.wifi.signal+'%'],['x','Running for',0,(c,i)=>dur(i.uptime)],['x','Storage used',0,(c,i)=>i.fs.u+' of '+i.fs.t+' KB'],
  ['x','Install an update',0,(c,i)=>pick('.bin','Choose file',ota),(c,i)=>'Use the .bin file made for this chip ('+i.arch+'). A wrong file can stop the lamp from starting.']]},
@@ -418,7 +417,7 @@ live:{t:'Light shows',ic:'live',
 sec:{t:'Security',ic:'lock',d:'Anyone on your Wi‑Fi can control and set up the lamp: WLED has no login. Keep the lamp off guest networks and never expose it to the internet.',
  f:[['sw','ota.aota','Developer updates','Allows ArduinoOTA uploads from a computer. Turn off if you don’t use them.'],
  ['x','Update lock and factory reset','A lock password and a full reset live on the classic WLED page.',()=>`<a class="btn" href="http://${HOST}/settings/sec">Open</a>`]]}};
-const GROUPS=[['behavior','sync','smart'],['wifi','lang','name','updates','bak','restart']],ADV=['hardware','time','nightlight','live','firmware','sec'];
+const GROUPS=[['behavior','sync','smart'],['wifi','lang','name','care']],ADV=['hardware','time','nightlight','live','firmware','sec'];
 let advOpen=false;
 
 /* ---------- small builders ---------- */
@@ -579,7 +578,7 @@ let UPD=st('update')||{},PLAN=[],last=0;   // UPD: {checked, src, latest: versio
 const UP={s:'',m:'',f:[]};                  // s: '' | chk | run | ok | err
 const newer=()=>{const x=UPD.src==SRC&&UPD.latest;return !!x&&x.v!=VER&&(VDEV||x.date>=VDATE)};
 const vt=x=>x.v+' · '+x.date;
-const banner=()=>`<div class="nb" id="nb"><span class="tx"><b>Update available</b><span class="h">A new version of the remote and these settings.</span></span>${bt('Update',()=>{location.hash='updates';UP.fo=1;update()},'primary')}</div>`;
+const banner=()=>`<div class="nb" id="nb"><span class="tx"><b>Update available</b><span class="h">A new version of the remote and these settings.</span></span>${bt('Update',()=>{location.hash='care';UP.fo=1;update()},'primary')}</div>`;
 function upHtml(){
   const n=newer(),m=UP.m||(UP.s?'':n?'Version '+vt(UPD.latest)+' is available.':UPD.src==SRC&&UPD.checked?UPD.latest?'Up to date.':'No update information yet. Check again later.':'');
   return `<div class="f"><div class="fr"><span class="tx"><span class="t">Remote and settings</span><span class="h">Version ${VDEV?'dev':vt({v:VER,date:VDATE})}</span></span>${
@@ -661,7 +660,7 @@ function row(k){
   return `<a class="item" href="#${k}"><span class="ic">${svg(s.ic)}</span><span class="tx"><span class="t">${s.t}</span>${sub?`<span class="s">${esc(sub)}</span>`:''}</span>${right}${svg('chev','chev')}</a>`;
 }
 function section(k){
-  const s=V[k];let h=`<h1>${s.t}</h1><p class="lead">${s.d}</p><div class="list" style="margin-top:18px">`;
+  const s=V[k];let h=`<h1>${s.t}</h1>${s.d?`<p class="lead">${s.d}</p>`:''}<div class="list" style="margin-top:18px">`;
   let skip=0;for(const f of s.f){ if(f[0]=='S'){h+=f[1].map((t,i)=>`<div class="f st"><b>${i+1}</b><span>${t}</span></div>`).join('')+`<div class="f fr sf"><span class="h">${f[2]}</span>${APPLE?'<a class="link" href="shortcuts://">Open Shortcuts</a>':''}</div></div><div class="list" style="margin-top:10px">`;continue} if(f[0]=='g'){skip=0;h+=`</div><div class="sub">${f[1]}</div>${f[2]?`<span class="h">${f[2]}</span>`:''}<div class="list">`;continue} if(!skip)h+=field(f); if(MASTER.includes(f[1])&&!get(D,f[1]))skip=1 }
   return (h+'</div>').replace(/<div class="list"( style="[^"]*")?><\/div>/g,'');
 }
