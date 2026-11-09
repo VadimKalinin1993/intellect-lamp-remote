@@ -652,7 +652,7 @@ function home(){
     !C.ap.pskl&&C.ap.behav!=3?`<div class="alert"><b>Backup access point has no password</b><p>While it’s open, anyone nearby could change your lamp’s settings.</p><a class="btn primary" href="#sos">Add a password</a></div>`:'';
   return (newer()?banner():'')+`<div class="who"><span class="mini"></span><span><b>${esc(C.id.name.trim()||'Lamp')}</b><span>${I.wifi&&I.wifi.rssi?'On '+esc(get(C,'nw.ins.0.ssid'))+' · '+I.ip:'Access point mode · '+HOST}</span></span></div>${fix}`+
   GROUPS.map(ks=>`<div class="list grp">${ks.map(row).join('')}</div>`).join('')+
-  `<button class="btn ghost more" data-act="${act(()=>{advOpen=!advOpen;render()})}" aria-expanded="${advOpen}">${advOpen?'Hide advanced settings':'Advanced settings'}</button>`+
+  `<button class="btn ghost more" data-act="${act(()=>{advOpen=!advOpen;render()})}" aria-expanded="${advOpen}">${advOpen?'Hide':'Other'}</button>`+
   (advOpen?`<div class="list grp">${ADV.map(row).join('')}<a class="item" href="http://${HOST}/settings"><span class="ic">${svg('ext')}</span><span class="tx"><span class="t">Classic WLED settings</span></span>${svg('chev','chev')}</a></div>`:'');
 }
 function row(k){

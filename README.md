@@ -83,7 +83,7 @@ Tap **Settings** at the top of the remote. Everyday things come first, in plain 
 - **Power on**, **Fades**, **Schedule** (scenes that switch on by the clock);
 - **Updates**, **Backup** (download and restore settings and scenes), **Restart**;
 - **Sync with other lamps**, **Smart home & Siri** (ready-made Siri Shortcuts addresses for on/off, brightness, your colors and scenes, plus Alexa, Philips Hue and MQTT);
-- **Advanced settings**, folded away under a button: hardware (LEDs, wiring and the power supply limit), WLED's built-in sleep timer, light shows, WLED firmware, security and the classic WLED pages.
+- **Other**, folded away under a button: hardware (LEDs, wiring and the power supply limit), WLED's built-in sleep timer, light shows, WLED firmware, security and the classic WLED pages.
 
 Changes are saved to the lamp itself, the same settings the stock WLED pages edit. The stock pages stay at `http://LAMP-ADDRESS/settings` if you ever need them.
 
