@@ -613,6 +613,22 @@ function onState(st){
   // night light
   renderTimer();
   orbFromState();
+  rememberLast();
+}
+
+/* ---------- power on "as it was before" ----------
+   WLED doesn't remember the light across a power cut. When Settings → Behavior is set to "As it was before",
+   the lamp starts with preset 250, and the remote keeps that preset up to date: 20 s after the light last
+   changed, and only while the lamp is on (so it never stores "off"). */
+let LAST = false, lastSnap = null, lastT = null;
+async function checkLast(){ try{ const c = await getJSON('/json/cfg'); LAST = !!(c.def && c.def.on && c.def.ps == 250); }catch(e){} }
+function rememberLast(){
+  if(!S || !S.on) return;
+  const g = S.seg[0], snap = JSON.stringify([S.bri, g.fx, g.sx, g.ix, g.pal, g.col, g.c1, g.c2, g.c3]);
+  if(lastSnap === null){ lastSnap = snap; return; }      // the light as we found it is already what the lamp has
+  if(!LAST || snap === lastSnap) return;
+  clearTimeout(lastT);
+  lastT = setTimeout(() => { if(!S || !S.on) return; lastSnap = snap; send({psave:250, n:'Remote: last light', ib:true, sb:true}); }, 20000);
 }
 
 /* ---------- touch-friendly sliders ----------
@@ -973,7 +989,9 @@ if(navigator.standalone) document.documentElement.classList.add('standalone');
     setConn('bad','Offline');
   }
   connectWS();
-  setTimeout(loadPalettes, 2000);   // palette previews, fetched slowly so the ESP8266 stays responsive
+  setTimeout(loadPalettes, 2000);
+  // the lamp's clock (for schedules) follows the phone; then see whether it should remember the last light
+  setTimeout(() => { send({time: Math.floor(Date.now()/1000)}); checkLast(); }, 1500);   // palette previews, fetched slowly so the ESP8266 stays responsive
   setTimeout(checkUpd, 8000);       // GitHub, not the lamp, but still well after the remote is up
   // tick the night-light countdown locally between updates
   setInterval(()=>{ if(S && S.nl && S.nl.on) renderTimer(); if(Date.now()-liveAt>3000) orbFromState(); }, 1000);
