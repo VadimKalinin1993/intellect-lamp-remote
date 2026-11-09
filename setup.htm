@@ -128,6 +128,7 @@ background:linear-gradient(90deg,rgba(var(--lamp),.9) 0 calc(var(--pad)*2 + var(
 .btn.more{display:block;width:100%;margin-top:14px;padding:13px 14px;text-align:center}
 .list.grp{margin-top:14px}
 .list.nest{margin-top:10px}
+.bar.show~.toast{bottom:calc(130px + env(safe-area-inset-bottom))}
 .opt.tmr,.opt.add2{align-items:center}
 .opt .tt{font-size:17px;font-weight:700;min-width:54px;font-variant-numeric:tabular-nums}
 .opt .plus{width:20px;text-align:center;font-size:20px;line-height:1;color:rgb(var(--lamp))}
@@ -169,7 +170,7 @@ background:linear-gradient(90deg,rgba(var(--lamp),.9) 0 calc(var(--pad)*2 + var(
   <header class="top"><a class="pill" id="back" data-nav href="app.htm"><svg width="16" height="16" viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></svg><span id="backT">Lamp</span></a><div class="pill conn" id="conn" role="status" title="Connecting…"><svg width="16" height="16" viewBox="0 0 24 24" stroke-width="2.2" aria-hidden="true"><path d="M2.5 9a14 14 0 0 1 19 0M5.5 12.5a9.5 9.5 0 0 1 13 0M8.8 16a4.8 4.8 0 0 1 6.4 0"/><circle cx="12" cy="19.5" r="1" fill="currentColor" stroke="none"/><path class="x" d="M4 3l16 18"/></svg><span class="vh" id="connT">Connecting…</span></div></header>
   <main id="main"></main>
 </div>
-<div class="bar" id="bar" aria-live="polite"><div class="bar-in"><p id="barP"></p><div class="acts"><button class="btn" id="undo">Discard</button><button class="btn primary" id="save">Save</button></div></div></div>
+<div class="bar" id="bar" aria-live="polite"><div class="bar-in"><p id="barP"></p><div class="acts"><button class="btn" id="undo">Discard</button><button class="btn primary" id="save">Connect</button></div></div></div>
 <div class="toast" id="toast" role="status"></div>
 <script>
 /* Translations. English is built in; a lang-xx.json.gz file on the lamp (Settings → Language)
@@ -479,6 +480,7 @@ const nameOf=w=>{const T=window.T||String;
   return w.t=='off'?T('Turn off'):w.t=='wled'?w.n:(w.t=='s'?T((FXS&&FXS.find(x=>x.k==w.s)||{n:w.s}).n):T(w.n||'Color'))+', '+pc(w.a||200)};
 const daysOf=d=>{const T=window.T||String;return d==127?T('Every day'):d==31?T('Weekdays'):d==96?T('Weekends'):DN.filter((n,j)=>d>>j&1).map(n=>T(n)).join(', ')};
 const hm=t=>String(t.hour).padStart(2,'0')+':'+String(t.min).padStart(2,'0');
+const bseg=(k,cur,o)=>`<div class="seg" role="radiogroup">${o.map(([v,t])=>`<button role="radio" aria-checked="${v==cur}" data-bh="${k}" data-v="${v}">${t}</button>`).join('')}</div>`;
 const bopt=(k,v,cur,t)=>`<button class="opt" role="radio" aria-checked="${v==cur}" data-bh="${k}" data-v="${v}"><span class="r"></span><span class="tx"><span class="t">${t}</span></span></button>`;
 function bsl(label,key,v,min,max,fmt){FMT[key]=fmt;
   return `<div class="f"><div class="fr"><span class="t">${label}</span><span class="val" id="bv-${key}">${fmt(v)}</span></div><div class="slider" style="--k:${((v-min)/(max-min)).toFixed(4)}"><input class="range" type="range" aria-label="${label}" data-bs="${key}" min="${min}" max="${max}" value="${v}"><span class="knob"></span></div></div>`}
@@ -497,9 +499,9 @@ function timerRow(t,i){const w=BH.timers[i]||whatOf(t.macro);
 function behavior(){bhInit();if(!FXL)fxl();
   const d=D.def||{},tr=get(D,'light.tr')||{},on=!!d.on,sm=!!tr.mode,T=tl();
   return `<h1>Behavior</h1>
-  <div class="sub">When power comes on</div><div class="list">${bopt('pw','wait',on?'on':'wait','Wait to be turned on')}${bopt('pw','on',on?'on':'wait','Turn the light on')}</div>`+
+  <div class="sub">When power comes on</div><div class="list"><div class="f">${bseg('pw',on?'on':'wait',[['wait','Wait to be turned on'],['on','Turn the light on']])}</div></div>`+
   (on?`<div class="list nest">${bopt('pm','last',BH.mode,'As it was before')}${bopt('pm','pick',BH.mode,'A color or scene I choose')}${BH.mode=='pick'?chooser('boot',BH.boot,0):''}</div>${BH.mode?'':'<span class="h">Right now the lamp starts with WLED’s default light.</span>'}`:'')+
-  `<div class="sub">Color and brightness changes</div><div class="list">${bopt('tr',0,sm?1:0,'Instant')}${bopt('tr',1,sm?1:0,'Smooth')}${sm?bsl('How smooth','trd',Math.max(1,tr.dur|0),1,50,v=>(v/10).toFixed(1)+' s'):''}</div>
+  `<div class="sub">Color and brightness change</div><div class="list"><div class="f">${bseg('tr',sm?'1':'0',[['0','Instant'],['1','Smooth']])}</div>${sm?bsl('Change speed','trd',51-Math.min(50,Math.max(1,tr.dur|0)),1,50,v=>((51-v)/10).toFixed(1)+' s'):''}</div>
   <div class="sub">Schedule</div><div class="list">${T.map(timerRow).join('')}${T.length<8?`<button class="opt add2" data-bh="add"><span class="plus">+</span><span class="tx"><span class="t">Add</span></span></button>`:''}</div>
   <span class="h">Time is synced with your phone.</span>`}
 function setTimers(T){put(D,'timers.ins',T.concat((get(D,'timers.ins')||[]).filter(x=>x.hour==255)));mark('timers.ins')}
@@ -519,7 +521,7 @@ document.addEventListener('click',e=>{const b=e.target.closest('[data-bh]');if(!
   else return;
   const y=scrollY;render();scrollTo(0,y)});
 document.addEventListener('input',e=>{const t=e.target,k=t.dataset.bs;if(!k)return;const v=+t.value;setRange(t,v);$('#bv-'+CSS.escape(k)).textContent=FMT[k](v);
-  if(k=='trd')return set('light.tr.dur',v);
+  if(k=='trd')return set('light.tr.dur',51-v);
   const key=k.slice(2),w=key=='boot'?BH.boot:BH.timers[+key.slice(1)];w.a=v;bhDirty(key)});
 document.addEventListener('change',e=>{const t=e.target;if(t.dataset.bh!='time')return;const [h,m]=t.value.split(':');if(h==null)return;const T=tl(),x=T[+t.dataset.i];x.hour=+h;x.min=+m;setTimers(T)});
 /* what a preset holds for a color, a scene or "turn off" */
@@ -646,7 +648,7 @@ async function update(){
 addEventListener('beforeunload',e=>{if(UP.s=='run')e.preventDefault()});
 
 function home(){
-  const fix=C.ap.behav==0||C.ap.behav==3?`<div class="alert"><b>Your lamp can get locked out</b><p>If your Wi‑Fi password changes, you won’t be able to reach this lamp. Let it open a backup access point instead.</p>${bt('Fix it',fixAP,'primary')}</div>`:
+  const fix=C.ap.behav==0||C.ap.behav==3?`<div class="alert"><b>Your lamp can get locked out</b><p>If your Wi‑Fi password changes, you won’t be able to reach the lamp. Tap Fix it to create a backup access point.</p>${bt('Fix it',fixAP,'primary')}</div>`:
     !C.ap.pskl&&C.ap.behav!=3?`<div class="alert"><b>Backup access point has no password</b><p>While it’s open, anyone nearby could change your lamp’s settings.</p><a class="btn primary" href="#sos">Add a password</a></div>`:'';
   return (newer()?banner():'')+`<div class="who"><span class="mini"></span><span><b>${esc(C.id.name.trim()||'Lamp')}</b><span>${I.wifi&&I.wifi.rssi?'On '+esc(get(C,'nw.ins.0.ssid'))+' · '+I.ip:'Access point mode · '+HOST}</span></span></div>${fix}`+
   GROUPS.map(ks=>`<div class="list grp">${ks.map(row).join('')}</div>`).join('')+
@@ -703,20 +705,34 @@ function patch(){
   return o;
 }
 const needsRb=()=>[...changed].some(p=>/^(nw|hw|wifi|id\.mdns)/.test(p));
+/* Settings save on their own, a moment after a change: switches, choices and sliders right away, typed text
+   when you leave the field. The one exception is the Wi‑Fi network: the lamp restarts and leaves this network,
+   so name and password wait for "Connect" in the bar at the bottom. */
+let asT=null,saving=0;
+const typing=()=>{const a=document.activeElement;return !!(a&&a.matches&&a.matches('input:not([type=range]):not([type=time]),textarea'))};
 function bar(){
-  const n=changed.size+BHD.size,b=$('#bar');b.classList.toggle('show',n>0&&view!='recovery');if(!n)return;
-  const wifi=[...changed].some(p=>p.startsWith('nw.'));
-  $('#barP').innerHTML=`<b>${n>1?n+' unsaved changes.':'1 unsaved change.'}</b> `+(wifi?'The lamp restarts and joins the new network. If the details are wrong, it opens its backup access point.':needsRb()?RB:'They apply right away.');
+  const wifi=[...changed].some(p=>p.startsWith('nw.')),b=$('#bar');
+  b.classList.toggle('show',wifi&&view!='recovery');
+  if(wifi)$('#barP').innerHTML='The lamp restarts and joins the new network. If the details are wrong, it opens its backup access point.';
+  clearTimeout(asT);
+  if(view=='recovery'||typing()||![...changed].some(p=>!p.startsWith('nw.'))&&!BHD.size)return;
+  asT=setTimeout(()=>save(1),[...changed].some(p=>/^(hw|id\.mdns|wifi)/.test(p))?1500:700);
 }
-async function save(){
-  const b=$('#save');b.disabled=true;b.textContent='Saving…';
-  let o,rb;
+document.addEventListener('focusout',e=>{if(e.target.matches&&e.target.matches('input'))setTimeout(bar,0)});
+async function save(auto){
+  if(saving){saving=2;return}saving=1;
+  const b=$('#save'),held=auto?[...changed].filter(p=>p.startsWith('nw.')):[];held.forEach(p=>changed.delete(p));
+  if(!auto){b.disabled=true;b.textContent='Connecting…'}
+  let o,rb,ok=0;
   try{await bhSave();o=patch();rb=needsRb();if(rb)o.rb=true;
     if(Object.keys(o).length){const r=await post('/json/cfg',o);if(!r.ok)throw r}
     for(const p of changed)if(/psk$/.test(p)){put(D,p.replace(/psk$/,'pskl'),(get(D,p)||'').length);put(D,p,undefined)}
-    C=clone(D);changed.clear();BHD.clear();toast(rb?'Saved. The lamp is restarting…':'Saved');render();
+    for(const p of changed)put(C,p,clone(get(D,p)));for(const p of ['timers.ins','def','light.tr','if.ntp'])put(C,p,clone(get(D,p)));
+    changed.clear();BHD.clear();ok=1;toast(rb?'Saved. The lamp is restarting…':'Saved');
   }catch(e){toast('Couldn’t save. Is the lamp still on your Wi‑Fi?')}
-  b.disabled=false;b.textContent='Save';
+  held.forEach(p=>changed.add(p));
+  if(!auto){b.disabled=false;b.textContent='Connect';if(ok)render()}
+  const again=saving==2;saving=0;if(again||ok&&changed.size)bar();
 }
 function undo(){D=clone(C);changed.clear();BH=null;BHD.clear();bhOpen=-1;render()}
 async function fixAP(){try{const r=await post('/json/cfg',{ap:{behav:1}});if(!r.ok)throw r;C.ap.behav=D.ap.behav=1;toast('Done. The lamp now opens its access point whenever Wi‑Fi is lost.');render()}catch(e){toast('Couldn’t reach the lamp.')}}
@@ -755,7 +771,7 @@ function timerEdit(t){
   put(D,'timers.ins',T.concat(sun));mark('timers.ins');
   if(k!='time'&&k!='macro')render();
 }
-$('#save').onclick=save;$('#undo').onclick=undo;
+$('#save').onclick=()=>save(0);$('#undo').onclick=undo;
 document.addEventListener('click',e=>{if(e.target.id=='join')join()});
 async function join(){
   const b=$('#join');if(!get(D,'nw.ins.0.ssid'))return toast('Enter your Wi‑Fi name first.');
