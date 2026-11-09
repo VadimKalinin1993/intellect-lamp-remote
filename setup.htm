@@ -418,7 +418,7 @@ live:{t:'Light shows',ic:'live',
 sec:{t:'Security',ic:'lock',d:'Anyone on your Wi‑Fi can control and set up the lamp: WLED has no login. Keep the lamp off guest networks and never expose it to the internet.',
  f:[['sw','ota.aota','Developer updates','Allows ArduinoOTA uploads from a computer. Turn off if you don’t use them.'],
  ['x','Update lock and factory reset','A lock password and a full reset live on the classic WLED page.',()=>`<a class="btn" href="http://${HOST}/settings/sec">Open</a>`]]}};
-const GROUPS=[['wifi','lang','name'],['behavior'],['updates','bak','restart'],['sync','smart']],ADV=['hardware','time','nightlight','live','firmware','sec'];
+const GROUPS=[['behavior','sync','smart'],['wifi','lang','name','updates','bak','restart']],ADV=['hardware','time','nightlight','live','firmware','sec'];
 let advOpen=false;
 
 /* ---------- small builders ---------- */
