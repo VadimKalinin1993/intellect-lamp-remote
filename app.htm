@@ -59,9 +59,6 @@ a.pill[aria-disabled="true"]{opacity:.4;pointer-events:none}
 a.pill{text-decoration:none}
 .pill[aria-expanded="true"]{background:var(--panel-2)}
 .pill.on{color:rgb(var(--lamp));color:color-mix(in srgb, rgb(var(--lamp)) 55%, #fff);box-shadow:0 0 0 1.5px rgba(var(--lamp),.6) inset;font-variant-numeric:tabular-nums}
-.pdot{width:14px;height:14px;border-radius:50%;flex:none;box-shadow:0 0 0 1px rgba(255,255,255,.2) inset}
-.pdot.multi{background:conic-gradient(#ff5e5e,#ffd25e,#6dff8a,#5ee6ff,#6b7bff,#e05eff,#ff5e5e)}
-.pill .pm{color:var(--muted);font-weight:500}
 .pill svg{color:rgb(var(--lamp));flex:none}
 /* a newer version of these pages is on GitHub: a tiny dot on Settings (Settings → Software installs it) */
 #setPill{position:relative;width:32px;padding:0;justify-content:center}
@@ -271,10 +268,9 @@ body.is-off .seg button.mode .md{opacity:.35;box-shadow:none}
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"/></svg>
           <span id="nlText">Sleep timer</span>
         </button>
-        <button class="pill" id="recentPill" hidden></button>
       </div>
     </div>
-      <a class="pill" id="setPill" href="setup.htm" aria-label="Settings" title="Settings"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg></a>
+      <a class="pill" id="setPill" data-nav href="setup.htm" aria-label="Settings" title="Settings"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg></a>
     </div>
     <div class="pop" id="nlPop" hidden>
       <div class="row" style="margin:0"><span class="label">Fade off in</span><button class="link" id="nlCancel" hidden>Cancel timer</button></div>
@@ -320,7 +316,7 @@ body.is-off .seg button.mode .md{opacity:.35;box-shadow:none}
     <button class="btn ghost more" id="allToggle" aria-expanded="false">All WLED effects</button>
     <div id="allBox" hidden>
       <input class="search" id="fxSearch" type="search" placeholder="Search effects" style="margin-top:12px" autocomplete="off">
-      <div class="list" id="fxList"></div>
+      <div class="list" id="fxList" lang="zxx"></div>
     </div>
   </section>
 
@@ -338,8 +334,52 @@ body.is-off .seg button.mode .md{opacity:.35;box-shadow:none}
 </div>
 
 <script>
+/* Translations, the same code as in setup.htm. English is built in; a lang-xx.json.gz file on the lamp
+   (Settings → Language) translates the page in place, the remote and Settings alike. Keys are the English text; {} in a key stands for a number or a name. */
+(()=>{
+const q=new URLSearchParams(location.search),de=document.documentElement,
+  dev=!/^https?:$/.test(location.protocol)||/^(localhost|127\.0\.0\.1|\[::1\])$/.test(location.hostname),
+  host=(dev&&q.get('host'))||(/^https?:$/.test(location.protocol)&&location.host)||'';
+let c=q.get('lang');try{c=c||JSON.parse(localStorage.getItem('lamp.lang'))}catch(e){}
+c=c||(navigator.language||'').slice(0,2);
+if(c=='en'||!/^[a-z]{2}$/.test(c)||!(host||q.has('demo'))||!window.DecompressionStream)return;
+const show=()=>de.style.opacity='';de.style.opacity=0;setTimeout(show,900);
+fetch((q.has('demo')?'lang/':'http://'+host+'/')+'lang-'+c+'.json.gz',{cache:'no-store'})
+  .then(r=>r.ok?r.arrayBuffer():null)
+  .then(b=>{if(!b)return;const u=new Uint8Array(b);return u[0]==31&&u[1]==139?new Response(new Blob([b]).stream().pipeThrough(new DecompressionStream('gzip'))).json():JSON.parse(new TextDecoder().decode(u))})
+  .then(j=>j&&apply(j)).catch(()=>{}).finally(show);
+function apply(j){
+  const d=j.s,re=[];de.lang=j.code;
+  const L=k=>k.replace(/\{\}/g,'').length;for(const k of Object.keys(d).filter(k=>k.includes('{}')).sort((a,b)=>L(b)-L(a)))re.push([new RegExp('^'+k.replace(/[.*+?^$()|[\]\\]/g,'\\$&').replace(/\{\}/g,'(.+?)')+'$'),d[k]]);
+  const tr=s=>{const t=s.trim();if(!t)return s;let v=d[t];
+    if(v==null)for(const[r,o]of re){const m=t.match(r);if(m){let i=1;v=o.replace(/\{\}/g,()=>m[i++]);break}}
+    return v==null?s:s.replace(t,v)};
+  const walk=n=>{
+    if(n.nodeType==3){const v=tr(n.nodeValue);if(v!=n.nodeValue)n.nodeValue=v;return}
+    if(n.nodeType!=1||/^(SCRIPT|STYLE)$/.test(n.tagName)||n.lang&&n.lang!=j.code&&n.lang!='en')return;
+    for(const a of['aria-label','placeholder','title']){const o=n.getAttribute(a);if(o){const v=tr(o);if(v!=o)n.setAttribute(a,v)}}
+    n.childNodes.forEach(walk)};
+  walk(document.body);document.title=tr(document.title);window.T=tr;dispatchEvent(new Event('lang'));
+  new MutationObserver(ms=>ms.forEach(m=>m.type=='childList'?m.addedNodes.forEach(walk):walk(m.target)))
+    .observe(document.body,{childList:true,subtree:true,characterData:true,attributes:true,attributeFilter:['aria-label','placeholder','title']});
+}
+})();
+</script>
+<script>
 (() => {
 'use strict';
+/* Moving between the remote and Settings: always start at the top with the keyboard closed. On a
+   Home Screen app iOS can otherwise keep the old scroll or keyboard offset, which pushes the top pills
+   under the clock and battery until the page is reloaded. replace() keeps no stack of pages behind. */
+if('scrollRestoration' in history) history.scrollRestoration = 'manual';
+const toTop = () => { try{ document.activeElement && document.activeElement.blur && document.activeElement.blur() }catch(e){} window.scrollTo(0,0); };
+addEventListener('pageshow', () => { toTop(); requestAnimationFrame(toTop); setTimeout(toTop, 300); });
+document.addEventListener('click', e => {
+  const a = e.target.closest && e.target.closest('a[data-nav]'); if(!a) return;
+  const h = a.getAttribute('href'); if(!h || h[0]==='#') return;
+  e.preventDefault(); toTop(); location.replace(h);
+});
+
 const $ = s => document.querySelector(s);
 const qs = new URLSearchParams(location.search);
 const store = {
@@ -572,7 +612,6 @@ function onState(st){
   document.querySelector('[data-tab="fx"]').classList.toggle('mode', sg.fx!==0);
   // night light
   renderTimer();
-  renderRecent();
   orbFromState();
 }
 
@@ -685,7 +724,7 @@ let lastPick = null;
 const wrap = $('#wheelWrap');
 wrap.addEventListener('pointerdown', e => { dragging='wheel'; wrap.setPointerCapture(e.pointerId); onPick(e); });
 wrap.addEventListener('pointermove', e => { if(dragging==='wheel') onPick(e); });
-const endPick = () => { if(dragging!=='wheel') return; dragging=null; if(lastPick){ addRecent(lastPick); setColor(lastPick, true); } };
+const endPick = () => { if(dragging!=='wheel') return; dragging=null; if(lastPick){ setColor(lastPick, true); } };
 wrap.addEventListener('pointerup', endPick); wrap.addEventListener('pointercancel', endPick);
 function onPick(e){ lastPick = pickAt(e); placeThumb(lastPick); setColor(lastPick); }
 function setColor(rgb, final){
@@ -718,7 +757,7 @@ $('#tiles').addEventListener('click', e => {
     return;
   }
   const b = e.target.closest('[data-rgb]'); if(!b) return;
-  const c = b.dataset.rgb.split(',').map(Number); placeThumb(c); setColor(c,true); pushRecent({c});
+  const c = b.dataset.rgb.split(',').map(Number); placeThumb(c); setColor(c,true);
 });
 function askDelete(i){
   const c = savedColors()[i]; if(!c) return;
@@ -741,38 +780,7 @@ $('#saveColor').addEventListener('click', () => {
   if(COLORS.some(([,x])=>x.join()===c.join()) || r.some(x=>x.join()===c.join())){ toast('This color is already in your colors'); return; }
   r.push(c); store.set('saved', r.slice(-15)); renderTiles(); toast('Color saved');
 });
-// recent items: {c:[r,g,b]} for colours, {fx:id} for effects
-function recentList(){ return store.get('recent2',[]).filter(x=>x && (x.c || x.fx || x.sc)); }
-function pushRecent(item){
-  const key = x => x.c ? 'c'+x.c.join() : x.sc ? 'sc'+x.sc : 'fx'+x.fx;
-  let r = recentList().filter(x=>key(x)!==key(item));
-  r.unshift(item); r=r.slice(0,9); store.set('recent2',r); renderRecent();
-}
-function addRecent(c){ pushRecent({c}); }
-// The Recent pill offers the last thing you applied that isn't on right now, so one tap takes you back.
-let recentItem = null;
-function isCurrent(x){
-  if(!S) return false; const sg = S.seg[0];
-  if(x.sc){ const a = activeScene(); return !!a && a.k===x.sc; }
-  return x.c ? (sg.fx===0 && sg.col[0].join()===x.c.join()) : (sg.fx===x.fx && !activeScene());
-}
-function renderRecent(){
-  const pill = $('#recentPill');
-  recentItem = recentList().find(x => (x.c || (x.sc ? sceneByKey(x.sc) && effects.length : effects[x.fx])) && !isCurrent(x)) || null;
-  pill.hidden = !recentItem; if(!recentItem) return;
-  pill.innerHTML = recentItem.c
-    ? `<span class="pdot" style="background:rgb(${recentItem.c})"></span>Recent`
-    : `<span class="pdot multi"></span>Recent <span class="pm">${esc(recentName(recentItem))}</span>`;
-  pill.setAttribute('aria-label', recentItem.c ? 'Back to the previous color' : 'Back to '+recentName(recentItem));
-}
-function recentName(x){ return x.sc ? sceneByKey(x.sc).n : (effects[x.fx]||'Effect'); }
-$('#recentPill').addEventListener('click', () => {
-  const x = recentItem; if(!x || !S) return;
-  if(x.sc){ applyScene(sceneByKey(x.sc)); return; }
-  if(x.c){ S.seg[0].fx = 0; S.seg[0].col[0] = x.c; S.on = true; placeThumb(x.c); onState(S); send({on:true, seg:[{id:0, fx:0, col:[x.c]}]}); pushRecent({c:x.c}); }
-  else { S.seg[0].fx = x.fx; S.on = true; onState(S); send({on:true, seg:[{id:0, fx:x.fx, fxdef:true}]}); pushRecent({fx:x.fx}); }
-});
-function markColorChips(c){ document.querySelectorAll('#recent [data-rgb], #tiles [data-rgb]').forEach(b=>b.setAttribute('aria-pressed', b.dataset.rgb===c.join(','))); }
+function markColorChips(c){ document.querySelectorAll('#tiles [data-rgb]').forEach(b=>b.setAttribute('aria-pressed', b.dataset.rgb===c.join(','))); }
 
 /* ---------- effects ---------- */
 function fxMeta(id){
@@ -809,7 +817,6 @@ function applyScene(sc){
   Object.assign(S.seg[0], seg);
   S.on = true; paramsOpen = true; onState(S);
   send({on:true, seg:[seg]});
-  pushRecent({sc:sc.k});
 }
 function renderFx(){
   $('#fxGrid').innerHTML = SCENES.filter(sc=>sceneFx(sc)>=0).map(sc =>
@@ -845,7 +852,6 @@ $('#fxList').addEventListener('click', e => {
   if(S.seg[0].fx===id && !activeScene()){ paramsOpen = !paramsOpen; placeParams(); return; }
   S.seg[0].fx = id; S.on = true; paramsOpen = true; onState(S);
   send({on:true, seg:[{id:0, fx:id, fxdef:true}]});
-  pushRecent({fx:id});
 });
 function markFx(){
   const a = activeScene(), fx = S ? S.seg[0].fx : -1;
@@ -954,14 +960,15 @@ let tt; function toast(t){ const el=$('#toast'); el.textContent=t; el.classList.
 /* ---------- boot ---------- */
 if(navigator.standalone) document.documentElement.classList.add('standalone');
 (async function boot(){
-  renderRecent(); renderTiles();
+  try{ localStorage.removeItem('lamp.recent2') }catch(e){}
+  renderTiles();
   const tab = store.get('tab','color'); const tb = document.querySelector(`[data-tab="${tab}"]`); if(tb) tb.click();
   try{
     const j = await getJSON('/json');
     effects = j.effects||[]; palettes = j.palettes||[];
     onInfo(j.info);
     try{ fxdata = await getJSON('/json/fxdata'); }catch(e){ fxdata=[]; }
-    renderFx(); renderRecent(); onState(j.state); setConn('ok','Connected');
+    renderFx(); onState(j.state); setConn('ok','Connected');
   }catch(e){
     setConn('bad','Offline');
   }

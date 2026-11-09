@@ -50,7 +50,7 @@ h1{font-size:28px;line-height:1.15;margin:26px 0 8px;letter-spacing:-.01em;text-
 .list{display:flex;flex-direction:column;background:var(--panel);border-radius:var(--r);box-shadow:0 0 0 1px var(--line) inset;overflow:hidden}
 .item,.f,.opt{border-top:1px solid var(--line)}
 .list>:first-child{border-top:0}
-.item{display:flex;align-items:center;gap:13px;width:100%;min-height:62px;border-left:0;border-right:0;border-bottom:0;background:transparent;text-align:left;padding:11px 14px;text-decoration:none;color:inherit}
+.item{display:flex;align-items:center;gap:13px;width:100%;min-height:54px;border-left:0;border-right:0;border-bottom:0;background:transparent;text-align:left;padding:11px 14px;text-decoration:none;color:inherit}
 .item:active{background:var(--panel-2)}
 /* full-width rows sit inside .list (overflow:hidden): draw their focus ring inside, or it gets clipped */
 .item:focus-visible,.opt:focus-visible{outline-offset:-2px;border-radius:var(--r)}
@@ -73,7 +73,7 @@ svg{fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-lin
 .fr>.link{white-space:nowrap;text-decoration:none}.sf{flex-wrap:wrap;row-gap:8px}.sf .h{flex:1 1 200px;margin:0}
 .st b{flex:none;width:22px;height:22px;border-radius:50%;display:grid;place-items:center;font-size:12.5px;background:rgba(var(--lamp),.18);color:rgb(var(--lamp))}
 #mk,#upd{display:contents}#mk>:first-child,#upd>:first-child{border-top:0}
-/* updates: the calm banner on home and the per-file progress in Software */
+/* updates: the calm banner on home and the per-file progress in Firmware */
 .nb{display:flex;align-items:center;gap:12px;margin:16px 0 0;padding:12px 12px 12px 16px;border-radius:var(--r);background:var(--panel);box-shadow:0 0 0 1px rgba(var(--lamp),.35) inset}
 .nb b{display:block;font-size:15px}
 .ul{margin-top:10px;font-size:14px}.ul .fr{padding:3px 0}.ul .val{max-width:none}
@@ -155,7 +155,7 @@ background:linear-gradient(90deg,rgba(var(--lamp),.9) 0 calc(var(--pad)*2 + var(
 </head>
 <body>
 <div class="app">
-  <header class="top"><a class="pill" id="back" href="app.htm"><svg width="16" height="16" viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></svg><span id="backT">Lamp</span></a><div class="pill conn" id="conn" role="status" title="Connecting…"><svg width="16" height="16" viewBox="0 0 24 24" stroke-width="2.2" aria-hidden="true"><path d="M2.5 9a14 14 0 0 1 19 0M5.5 12.5a9.5 9.5 0 0 1 13 0M8.8 16a4.8 4.8 0 0 1 6.4 0"/><circle cx="12" cy="19.5" r="1" fill="currentColor" stroke="none"/><path class="x" d="M4 3l16 18"/></svg><span class="vh" id="connT">Connecting…</span></div></header>
+  <header class="top"><a class="pill" id="back" data-nav href="app.htm"><svg width="16" height="16" viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></svg><span id="backT">Lamp</span></a><div class="pill conn" id="conn" role="status" title="Connecting…"><svg width="16" height="16" viewBox="0 0 24 24" stroke-width="2.2" aria-hidden="true"><path d="M2.5 9a14 14 0 0 1 19 0M5.5 12.5a9.5 9.5 0 0 1 13 0M8.8 16a4.8 4.8 0 0 1 6.4 0"/><circle cx="12" cy="19.5" r="1" fill="currentColor" stroke="none"/><path class="x" d="M4 3l16 18"/></svg><span class="vh" id="connT">Connecting…</span></div></header>
   <main id="main"></main>
 </div>
 <div class="bar" id="bar" aria-live="polite"><div class="bar-in"><p id="barP"></p><div class="acts"><button class="btn" id="undo">Discard</button><button class="btn primary" id="save">Save</button></div></div></div>
@@ -194,6 +194,18 @@ function apply(j){
 </script>
 <script>
 (()=>{'use strict';
+/* Moving between the remote and Settings: always start at the top with the keyboard closed. On a
+   Home Screen app iOS can otherwise keep the old scroll or keyboard offset, which pushes the top pills
+   under the clock and battery until the page is reloaded. replace() keeps no stack of pages behind. */
+if('scrollRestoration' in history) history.scrollRestoration = 'manual';
+const toTop = () => { try{ document.activeElement && document.activeElement.blur && document.activeElement.blur() }catch(e){} window.scrollTo(0,0); };
+addEventListener('pageshow', () => { toTop(); requestAnimationFrame(toTop); setTimeout(toTop, 300); });
+document.addEventListener('click', e => {
+  const a = e.target.closest && e.target.closest('a[data-nav]'); if(!a) return;
+  const h = a.getAttribute('href'); if(!h || h[0]==='#') return;
+  e.preventDefault(); toTop(); location.replace(h);
+});
+
 const $=s=>document.querySelector(s),qs=new URLSearchParams(location.search),DEMO=qs.has('demo');
 const st=k=>{try{return JSON.parse(localStorage.getItem('lamp.'+k))}catch(e){}};
 /* ?host= only on a page opened from a file or a local server: served by the lamp, the page always talks to that lamp */
@@ -299,7 +311,7 @@ document.addEventListener('input',e=>{const t=e.target,k=t.dataset.b;
 const TZ=['GMT (UTC)','GMT/BST (UK)','CET/CEST (Central Europe)','EET/EEST (Eastern Europe)','US Eastern','US Central','US Mountain','US Arizona','US Pacific','China, Western Australia','Japan, Korea','Australia East','New Zealand','North Korea','India','Saskatchewan','Australia Central (no DST)','Australia Central','Hawaii','Novosibirsk','Alaska','Mexico Central'].map((t,i)=>[i,t]);
 const LANGS=[['','Same as this phone'],['en','English'],['ru','Русский'],['uk','Українська']];
 /* Updates of the remote and these settings (WLED itself is separate). build.py writes the version here
-   and dist/version.json on GitHub. Settings → Software checks it; with auto-check on, the pages look
+   and dist/version.json on GitHub. Settings → Firmware checks it; with auto-check on, the pages look
    once a day, quietly. Nothing about the lamp is sent. ?updsrc=URL points to another dist/ folder for testing
    (tools/serve_dist.py on a computer at home) and is remembered after a confirmation; ?updsrc= goes back to GitHub.
    Only this repository on GitHub and addresses on the home network are accepted, so a link from the internet
@@ -315,8 +327,8 @@ const myLang=()=>st('lang')||'';
 let LF=null;
 const RB='Saving restarts the lamp, about 15 seconds.';
 const V={
-lang:{t:'Language',s:'For these settings; the remote stays in English',ic:'globe',v:()=>LANGS.find(l=>l[0]==myLang())[1],own:1},
-wifi:{t:'Wi‑Fi',s:'The network your lamp joins',ic:'wifi',v:c=>get(c,'nw.ins.0.ssid')||'Not set',
+lang:{t:'Language',ic:'globe',v:()=>LANGS.find(l=>l[0]==myLang())[1],own:1},
+wifi:{t:'Wi‑Fi',ic:'wifi',v:c=>get(c,'nw.ins.0.ssid')||'Not set',
  d:'Change this when you get a new router or a new Wi‑Fi password. The lamp can only join 2.4 GHz networks.',
  f:[['in','nw.ins.0.ssid','Network name','Exactly as your phone shows it. Capital letters matter.',{ph:'Your Wi‑Fi name',max:32}],
  ['pw','nw.ins.0.psk','Password','Leave empty to keep the saved one.','nw.ins.0.pskl'],
@@ -325,42 +337,42 @@ wifi:{t:'Wi‑Fi',s:'The network your lamp joins',ic:'wifi',v:c=>get(c,'nw.ins.0
  ['ip','nw.ins.0.ip','Lamp address','0.0.0.0 lets the router choose (recommended).'],['ip','nw.ins.0.gw','Router address'],['ip','nw.ins.0.sn','Subnet mask'],
  ['g','Extras'],['in','id.mdns','Local name','Phones and computers can open the lamp at this name instead of its number.',{suf:'.local',max:32}],
  ['sw','wifi.sleep','Wi‑Fi power saving','Turn off if the lamp keeps dropping off the network.']]},
-sos:{t:'Backup access point',s:'Your way back in when Wi‑Fi fails',ic:'sos',v:c=>({0:'After power‑on',1:'When Wi‑Fi is lost',2:'Always on',3:'Button only'})[c.ap.behav],
+sos:{t:'Backup access point',ic:'sos',v:c=>({0:'After power‑on',1:'When Wi‑Fi is lost',2:'Always on',3:'Button only'})[c.ap.behav],
  d:'When the lamp can’t reach your Wi‑Fi, it can open a small network of its own. Join it from your phone, and this page opens so you can enter the new Wi‑Fi. No reset, no app.',
  f:[['r','ap.behav','Open the access point',0,[[1,'Whenever Wi‑Fi is lost','Recommended. Opens about 12 seconds after the lamp loses Wi‑Fi and closes once it’s back.'],[0,'Only right after power‑on','After a Wi‑Fi password change you’ll have to unplug the lamp and plug it back in.'],[2,'Always','Stays on next to your Wi‑Fi, visible to everyone nearby.'],[3,'Only from the button','Only for lamps with a button: hold it for 5 seconds. Without a button you won’t be able to get back in.']]],
  ['g','Access point details'],['in','ap.ssid','Access point name','Look for this name in your phone’s Wi‑Fi list.',{max:32}],
  ['pw','ap.psk','Access point password','8 characters or more. Without one, anyone nearby can change the lamp while its access point is open.','ap.pskl'],
  ['sw','ap.hide','Hide the name','You’ll have to type the name to join.'],['n','ap.chan','Wi‑Fi channel','Change only if your phone can’t see the access point.',{min:1,max:13}],
  ['x','Access point address','Open this in the browser once you’ve joined.',c=>get(c,'ap.ip').join('.')]]},
-name:{t:'Name',s:'How the lamp shows up',ic:'tag',v:c=>c.id.name.trim(),d:'The name you see on your router, in the WLED app and in this remote.',
+name:{t:'Lamp name',ic:'tag',v:c=>c.id.name.trim(),d:'The name you see on your router, in the WLED app and in this remote.',
  f:[['in','id.name','Lamp name',0,{max:32}]]},
-pow:{t:'Power on',s:'What happens when it gets power',ic:'pow',v:c=>c.def.on?'On, '+pc(c.def.bri):'Stays off',
+pow:{t:'Power on',ic:'pow',v:c=>c.def.on?'On, '+pc(c.def.bri):'Stays off',
  d:'After a power cut, or when you plug the lamp in or flip its wall switch.',
  f:[['sw','def.on','Light up straight away','Off: the lamp waits until you turn it on.'],['sl','def.bri','Brightness',0,{min:1,max:255,f:pc}],
  ['s','def.ps','Start with','A saved scene, or the lamp’s default light.',PRE]]},
-fade:{t:'Fades & sleep timer',s:'How smoothly the light changes',ic:'moon',v:c=>c.light.tr.mode?c.light.tr.dur/10+' s fade':'No fade',
+fade:{t:'Fades & sleep timer',ic:'moon',v:c=>c.light.tr.mode?c.light.tr.dur/10+' s fade':'No fade',
  d:'How the lamp moves between colors and brightness, and what its built‑in sleep timer does.',
  f:[['sw','light.tr.mode','Smooth changes','Fade instead of jumping between colors.'],['sl','light.tr.dur','Fade length',0,{min:0,max:100,f:v=>(v/10).toFixed(1)+' s'}],
  ['g','Built‑in sleep timer','Used by the WLED app and Home Assistant. The remote’s Sleep timer sets its own length.'],
  ['r','light.nl.mode','When the time is up',0,[[0,'Turn off at once'],[1,'Fade out slowly'],[2,'Fade to another color'],[3,'Sunrise','Gets brighter instead. Use it as a wake‑up light.']]],
  ['n','light.nl.dur','Length',0,{min:1,max:255,u:'min'}],['sl','light.nl.tbri','Brightness at the end','0% means the lamp turns off.',{min:0,max:255,f:pc}]]},
-time:{t:'Time & schedule',s:'Scenes that switch on by the clock',ic:'clock',v:c=>{const n=tl().filter(t=>t.en).length;return !c.if.ntp.en?'Off':n?n+(n>1?' timers':' timer'):'No timers'},
+time:{t:'Schedule',ic:'clock',v:c=>{const n=tl().filter(t=>t.en).length;return !c.if.ntp.en?'Off':n?n+(n>1?' timers':' timer'):'No timers'},
  d:'Let the lamp change scenes by itself, like warm light every evening or a wake‑up glow at 7:00. The lamp needs the time from the internet for this; nothing else leaves your network.',
  f:[['sw','if.ntp.en','Keep time','Asks a public time server for the current time.'],['s','if.ntp.tz','Time zone',0,TZ],
  ['g','Timers','Each timer starts a saved scene. Make scenes in the WLED app first.'],['T'],
  ['g','Time server'],['in','if.ntp.host','Server','Change only if your network blocks the default one.',{max:32}]]},
-amp:{t:'Power limit',s:'Protects the power adapter',ic:'bolt',v:c=>c.hw.led.maxpwr?(c.hw.led.maxpwr/1000).toFixed(1)+' A':'Off',
+amp:{t:'Power settings',ic:'bolt',v:c=>c.hw.led.maxpwr?(c.hw.led.maxpwr/1000).toFixed(1)+' A':'Off',
  d:'Bright white needs a lot of current. The limit dims the lamp just enough to stay within what its adapter can give, so it never overheats or flickers.',
  f:[['n','hw.led.maxpwr','Adapter limit','Find it on the adapter label. 0 turns the limit off, which isn’t recommended.',{min:0,max:65000,step:50,u:'mA'}],
  ['n','hw.led.ledma','Current per LED','How much one LED draws at full white. 55 mA suits most 5 V strips.',{min:0,max:255,u:'mA'}]]},
-bak:{t:'Backup & restore',s:'Keep a copy of your settings',ic:'box',v:()=>'',d:'Download a copy before big changes. If something goes wrong, restore it here.',
+bak:{t:'Backup',ic:'box',v:()=>'',d:'Download a copy before big changes. If something goes wrong, restore it here.',
  f:[['x','Settings','Everything on this page. Wi‑Fi passwords are not included.',()=>dl('cfg.json')],['x','Scenes','Your saved scenes and presets.',()=>dl('presets.json')],
  ['x','Restore from a file','Pick a file you downloaded. The lamp restarts with it.',()=>pick('.json','Choose file',restore)]]},
-sw:{t:'Software',s:'Version, restart and updates',ic:'up',v:(c,i)=>newer()?'Update available':'WLED '+i.ver,d:'The remote and these settings update from GitHub in a minute. WLED, the software inside the lamp, comes from the WLED project: install it only if you need a fix.',
+sw:{t:'Firmware',ic:'up',v:(c,i)=>newer()?'Update available':'WLED '+i.ver,d:'The remote and these settings update from GitHub in a minute. WLED, the software inside the lamp, comes from the WLED project: install it only if you need a fix.',
  f:[['U'],['g','WLED'],['x','Version',0,(c,i)=>i.ver],['x','Wi‑Fi signal',0,(c,i)=>i.wifi.signal+'%'],['x','Running for',0,(c,i)=>dur(i.uptime)],['x','Storage used',0,(c,i)=>i.fs.u+' of '+i.fs.t+' KB'],
  ['x','Restart the lamp','Takes about 10 seconds. Nothing is lost.',()=>bt('Restart',restart)],
  ['x','Install an update',0,(c,i)=>pick('.bin','Choose file',ota),(c,i)=>'Use the .bin file made for this chip ('+i.arch+'). A wrong file can stop the lamp from starting.']]},
-led:{t:'LEDs & wiring',s:'Strip type, count and pins',ic:'chip',v:c=>get(c,'hw.led.ins.0.len')+' LEDs',
+led:{t:'LEDs & wiring',ic:'chip',
  d:'Describes the LED strip inside the lamp. These are set at the factory: wrong values can make the lamp go dark or show the wrong colors. Note the old value before you change one.',
  f:[['n','hw.led.ins.0.len','Number of LEDs',0,{min:1,max:1500}],['n','hw.led.ins.0.pin.0','Data pin','The chip pin (GPIO) the strip’s data wire is connected to.',{min:0,max:40}],
  ['s','hw.led.ins.0.type','LED chip',0,[[22,'WS2812 / WS2811'],[30,'SK6812 RGBW'],[31,'TM1814'],[24,'WS2811 400 kHz'],[50,'WS2801'],[51,'APA102'],[52,'LPD8806'],[41,'PWM white'],[43,'PWM RGB'],[44,'PWM RGBW']]],
@@ -375,14 +387,14 @@ led:{t:'LEDs & wiring',s:'Strip type, count and pins',ic:'chip',v:c=>get(c,'hw.l
  ['n','hw.btn.tt','Touch sensitivity','Lower is more sensitive.',{min:0,max:100}],
  ['n','hw.relay.pin','Relay pin','A relay cuts power to the LEDs when the lamp is off.',{min:-1,max:40}],['sw','hw.relay.rev','Relay works inverted'],
  ['n','hw.ir.pin','Infrared receiver pin','For an IR remote control.',{min:-1,max:40}]]},
-sync:{t:'Sync with other lamps',s:'Several WLED lamps acting as one',ic:'link',
+sync:{t:'Sync with other lamps',ic:'link',
  d:'WLED lamps on the same Wi‑Fi can copy each other. Turn on sending on one lamp and receiving on the others.',
  f:[['g','Copy from other lamps'],['sw','if.sync.recv.bri','Brightness'],['sw','if.sync.recv.col','Color'],['sw','if.sync.recv.fx','Effects'],['n','if.sync.recv.grp','Group','Lamps only copy lamps with the same group number.',{min:1,max:255}],
  ['g','Send to other lamps'],['sw','if.sync.send.dir','Send my changes','Changes made here, in the remote or in the app.'],['sw','if.sync.send.btn','Also button presses'],['sw','if.sync.send.va','Also Alexa commands'],['sw','if.sync.send.hue','Also Hue changes'],
  ['sw','if.sync.send.twice','Send twice','Helps when Wi‑Fi is unreliable.'],['n','if.sync.send.grp','Group',0,{min:1,max:255}],
  ['g','Finding lamps'],['sw','if.nodes.list','Show other lamps','Lists nearby WLED lamps in the WLED app.'],['sw','if.nodes.bcast','Announce this lamp','Lets other lamps and apps find it.'],
  ['g','Network ports','Change only if another device on your network already uses them.'],['n','if.sync.port0','Sync port',0,{min:1,max:65535}],['n','if.sync.port1','Second port',0,{min:1,max:65535}]]},
-smart:{t:'Smart home',s:'Siri, Alexa, Philips Hue, MQTT',ic:'home',d:'Control the lamp by voice with Siri or Alexa, or from your home system. All of this works inside your home network.',
+smart:{t:'Smart home',ic:'home',d:'Control the lamp by voice with Siri or Alexa, or from your home system. All of this works inside your home network.',
  f:[['g','Siri &amp; Shortcuts','Siri runs a shortcut when you say its name.'],['S',['Copy an address below.','In Shortcuts, tap + and add “Get Contents of URL” with that address.','Name the shortcut with what you’ll say, like “Lamp on”.','Say “Hey Siri” and the name.'],'Works while the phone is on your home Wi‑Fi.'],
  sh('Turn on',()=>'T=1'),sh('Turn off',()=>'T=0'),sh('Turn on or off',()=>'T=2'),sh('Brighter',()=>'A=~50'),sh('Dimmer',()=>'A=~-50'),
  ['g','Make your own command','A color, an effect or a saved scene, ready to paste into a shortcut.'],['K'],
@@ -391,7 +403,7 @@ smart:{t:'Smart home',s:'Siri, Alexa, Philips Hue, MQTT',ic:'home',d:'Control th
  ['n','if.hue.iv','Check every',0,{k:.1,step:.1,min:.1,max:25,u:'s'}],['sw','if.hue.recv.on','Copy on and off'],['sw','if.hue.recv.bri','Copy brightness'],['sw','if.hue.recv.col','Copy color'],
  ['g','MQTT','For Home Assistant, Node‑RED and similar systems.'],['sw','if.mqtt.en','Use MQTT'],['in','if.mqtt.broker','Broker address',0,{max:32}],['n','if.mqtt.port','Port',0,{min:1,max:65535}],
  ['in','if.mqtt.user','Username',0,{max:40}],['pw','if.mqtt.psk','Password',0,'if.mqtt.pskl'],['in','if.mqtt.cid','Client ID',0,{max:40}],['in','if.mqtt.topics.device','Device topic',0,{max:32}],['in','if.mqtt.topics.group','Group topic',0,{max:32}]]},
-live:{t:'Light shows',s:'Live control from a computer',ic:'live',
+live:{t:'Light shows',ic:'live',
  d:'Lets music visualizers and lighting software (E1.31, Art‑Net, DDP) drive the lamp in real time. While a show plays, the remote can’t change the lamp.',
  f:[['sw','if.live.en','Accept live control'],['sw','if.live.mc','Multicast','Turn on if your software sends to many lamps at once.'],['n','if.live.port','Port',0,{min:1,max:65535}],
  ['n','if.live.timeout','Back to normal after','Seconds without data before the lamp returns to its own light.',{k:.1,step:.1,min:.1,max:65,u:'s'}],
@@ -399,10 +411,10 @@ live:{t:'Light shows',s:'Live control from a computer',ic:'live',
  ['g','DMX'],['n','if.live.dmx.uni','Universe',0,{min:0,max:63999}],['n','if.live.dmx.addr','Start address',0,{min:1,max:510}],
  ['s','if.live.dmx.mode','Mode',0,['Off','Single RGB','Single DRGB','Effect','Multi RGB','Dimmer + multi RGB','Multi RGBW'].map((t,i)=>[i,t])],
  ['sw','if.live.dmx.seqskip','Ignore packet order'],['n','if.live.offset','LED offset',0,{min:-255,max:255}]]},
-sec:{t:'Security',s:'Updates, locks and reset',ic:'lock',d:'Anyone on your Wi‑Fi can control and set up the lamp: WLED has no login. Keep the lamp off guest networks and never expose it to the internet.',
+sec:{t:'Security',ic:'lock',d:'Anyone on your Wi‑Fi can control and set up the lamp: WLED has no login. Keep the lamp off guest networks and never expose it to the internet.',
  f:[['sw','ota.aota','Developer updates','Allows ArduinoOTA uploads from a computer. Turn off if you don’t use them.'],
  ['x','Update lock and factory reset','A lock password and a full reset live on the classic WLED page.',()=>`<a class="btn" href="http://${HOST}/settings/sec">Open</a>`]]}};
-const GROUPS=[['',['wifi','sos']],['Lamp',['lang','name','pow','fade','time','amp']],['Care',['bak','sw']],['Advanced',['led','sync','smart','live','sec'],'For tinkerers. Most lamps never need these.']];
+const GROUPS=[['',['wifi','sos']],['Lamp',['lang','name','pow','fade','time','amp']],['Care',['bak','sw']],['Advanced',['led','sync','smart','live','sec']]];
 
 /* ---------- small builders ---------- */
 const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>'&#'+c.charCodeAt(0)+';');
@@ -549,8 +561,8 @@ function home(){
     !C.ap.pskl&&C.ap.behav!=3?`<div class="alert"><b>Backup access point has no password</b><p>While it’s open, anyone nearby could change your lamp’s settings.</p><a class="btn primary" href="#sos">Add a password</a></div>`:'';
   return (newer()?banner():'')+`<div class="who"><span class="mini"></span><span><b>${esc(C.id.name.trim()||'Lamp')}</b><span>${I.wifi&&I.wifi.rssi?'On '+esc(get(C,'nw.ins.0.ssid'))+' · '+I.ip:'Access point mode · '+HOST}</span></span></div>${fix}`+
   GROUPS.map(([g,ks,d])=>(g?`<div class="sub">${g}</div>${d?`<span class="h">${d}</span>`:''}`:'<div style="height:10px"></div>')+`<div class="list">`+ks.map(k=>{const s=V[k],v=s.v?s.v(C,I):'';
-    return `<a class="item" href="#${k}"><span class="ic">${svg(s.ic)}</span><span class="tx"><span class="t">${s.t}</span><span class="s">${s.s}</span></span>${k=='sos'&&safe()?`<span class="val ok">${svg('ok')}Protected</span>`:v?`<span class="val">${esc(v)}</span>`:''}${svg('chev','chev')}</a>`}).join('')+
-    (g=='Advanced'?`<a class="item" href="http://${HOST}/settings"><span class="ic">${svg('ext')}</span><span class="tx"><span class="t">Classic WLED settings</span><span class="s">The original pages, always there</span></span>${svg('chev','chev')}</a>`:'')+`</div>`).join('');
+    return `<a class="item" href="#${k}"><span class="ic">${svg(s.ic)}</span><span class="tx"><span class="t">${s.t}</span>${s.s?`<span class="s">${s.s}</span>`:''}</span>${k=='sos'&&safe()?`<span class="val ok">${svg('ok')}Protected</span>`:v?`<span class="val">${esc(v)}</span>`:''}${svg('chev','chev')}</a>`}).join('')+
+    (g=='Advanced'?`<a class="item" href="http://${HOST}/settings"><span class="ic">${svg('ext')}</span><span class="tx"><span class="t">Classic WLED settings</span></span>${svg('chev','chev')}</a>`:'')+`</div>`).join('');
 }
 function tip(){
   const a=C.ap,n=esc(a.ssid.trim()),ip=a.ip.join('.');

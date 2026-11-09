@@ -4,7 +4,7 @@
     python3 tools/make_lang.py
 
 Each entry in translations.py is (English, Russian, Ukrainian). The English side may use plain
-- ' " and ... ; it is matched to the exact text in setup.htm (the remote, app.htm, is not translated) (non-breaking hyphens,
+- ' " and ... ; it is matched to the exact text in setup.htm and app.htm (non-breaking hyphens,
 curly quotes, ellipsis), so the keys in lang/*.json are exactly what the pages show. {} stands
 for a number or a name. Phrases that no longer exist in the pages are reported.
 """
@@ -15,7 +15,7 @@ sys.path.insert(0, str(ROOT / "tools"))
 from translations import T  # noqa: E402
 
 LANGS = {"ru": ("Русский", 1), "uk": ("Українська", 2)}
-SRC = "".join((ROOT / f).read_text() for f in ("setup.htm",)).replace("&amp;", "&")
+SRC = "".join((ROOT / f).read_text() for f in ("setup.htm", "app.htm")).replace("&amp;", "&")
 ALT = {"-": "[-‑−–]", "'": "['’]", '"': '["“”]'}
 
 

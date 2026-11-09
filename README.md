@@ -13,11 +13,10 @@
 - **Colors**: 12 ready-made colors (warm whites plus soft tones), and a color wheel under **Custom** for saving your own.
 - **Scenes**: 10 calm, pre-tuned animations made for a diffused lamp: Candle, Embers, Breathe, Ocean, Aurora, Sunset, Lagoon, Fireflies, Pastel and Spectrum. Each scene has its own speed and intensity sliders. The full list of WLED effects is still there under **All WLED effects**.
 - **Sleep timer**: the lamp fades out over 3, 5, 15, 30 or 60 minutes, with a countdown at the top.
-- **Recent**: one tap takes you back to the color or scene you had before.
 - **Settings**: Wi‑Fi, a backup access point, schedules, Siri and more, in plain words (see [Settings](#settings)).
 - **Home Screen app**: has its own icon and opens full screen, like a native app.
 
-Nothing is sent to the internet. The app talks only to your lamp, over your home network. (Two exceptions, both downloads from this page: installing a [language](#languages), and a check for a new version once a day, which you can switch off in **Settings → Software**. Nothing about your lamp is sent.)
+Nothing is sent to the internet. The app talks only to your lamp, over your home network. (Two exceptions, both downloads from this page: installing a [language](#languages), and a check for a new version once a day, which you can switch off in **Settings → Firmware**. Nothing about your lamp is sent.)
 
 ## What you need
 
@@ -74,14 +73,14 @@ Now it opens like a regular app, with its own icon.
 
 Anyone on the same Wi‑Fi can open `http://LAMP-ADDRESS/app.htm` on their own phone and add it to their Home Screen. You all control the same lamp and see the same state: on/off, brightness, color, scene and timer.
 
-Saved custom colors, the **Recent** pill and the language are kept per device, in that phone's browser.
+Saved custom colors and the language are kept per device, in that phone's browser.
 
 ## Settings
 
 Tap **Settings** at the top of the remote. Everyday things come first, in plain words:
 
 - **Wi‑Fi** and the **Backup access point** (see below);
-- **Lamp**: language, name, what it does when it gets power, fades and sleep timer, scenes that switch on by the clock (**Time & schedule**), power limit;
+- **Lamp**: language, name, what it does when it gets power, fades and sleep timer, scenes that switch on by the clock (**Schedule**), **Power settings** (the adapter's limit);
 - **Care**: download and restore the lamp's settings and scenes, software version, restart and updates;
 - **Advanced**, for tinkerers: LEDs & wiring, sync with other lamps, **Smart home** (ready-made Siri Shortcuts addresses for on/off, brightness, your colors and scenes, plus Alexa, Philips Hue and MQTT), light shows and security.
 
@@ -99,13 +98,13 @@ This needs **Settings → Backup access point** set to **Whenever Wi‑Fi is los
 
 ## Languages
 
-The remote itself stays in English. The settings page can be switched to **Russian** or **Ukrainian** from **Settings → Language**: the phone downloads the file from this page and saves it on the lamp, so it needs to be online once (for example, on mobile data or your home Wi‑Fi). After that, every phone on the lamp can use it, and each phone picks its own language.
+The whole app, the remote and the settings, can be switched to **Russian** or **Ukrainian** from **Settings → Language**: the phone downloads the file from this page and saves it on the lamp, so it needs to be online once (for example, on mobile data or your home Wi‑Fi). After that, every phone on the lamp can use it, and each phone picks its own language.
 
 ## Updating
 
-**From the phone:** open **Settings → Software** and tap **Check for updates**, then **Update**. The phone downloads the new files from this page, saves them on the lamp one by one, checks each one, and reloads. Keep the page open until it's done. If something fails, don't close the page: tap **Try again**. Installed languages are updated too.
+**From the phone:** open **Settings → Firmware** and tap **Check for updates**, then **Update**. The phone downloads the new files from this page, saves them on the lamp one by one, checks each one, and reloads. Keep the page open until it's done. If something fails, don't close the page: tap **Try again**. Installed languages are updated too.
 
-The remote and the settings also look for a new version on their own, once a day and quietly, a few seconds after they open: a small dot appears on **Settings** and an **Update available** banner at the top of the settings. They only download a small `version.json` from this page; nothing about your lamp is sent. You can switch this off in **Settings → Software**.
+The remote and the settings also look for a new version on their own, once a day and quietly, a few seconds after they open: a small dot appears on **Settings** and an **Update available** banner at the top of the settings. They only download a small `version.json` from this page; nothing about your lamp is sent. You can switch this off in **Settings → Firmware**.
 
 **By hand:** download the new files and upload `app.htm` (and `setup.htm`, if you use the settings) from the `dist` folder through `http://LAMP-ADDRESS/edit` again. They replace the old ones. If you already have the remote, re-uploading `app.htm` is enough; without `setup.htm`, the gear opens the stock WLED settings. If the icon changed too, upload the new `icon.png`, then remove the Home Screen shortcut and add it again (phones cache the icon).
 
@@ -130,7 +129,7 @@ A change merged on GitHub doesn't reach any lamp by itself: every lamp owner upl
 
 If something failed, run the same command again: it's safe to repeat. If the remote page is broken after a failed run, `setup.htm` is uploaded first, so `http://<lamp address>/setup.htm` still opens. If the script says the files won't fit, tell the owner instead of using `--force`.
 
-After this, updates come straight from the phone: **Settings → Software → Update** (see [Updating](#updating)).
+After this, updates come straight from the phone: **Settings → Firmware → Update** (see [Updating](#updating)).
 
 ## Removing
 
@@ -155,7 +154,7 @@ Open `http://LAMP-ADDRESS/edit`, right-click `app.htm` (and `icon.png`, `setup.h
 - Translations live in `tools/translations.py`; `python3 tools/make_lang.py` writes `lang/*.json` and reports phrases that no longer exist in the pages. Then run `build.py`.
 - Open `setup.htm?demo` from a local web server (for example `python3 -m http.server` in the repository root) to try the settings with the demo data in `dev/`, without a lamp.
 - `python3 tools/upload.py LAMP-ADDRESS` uploads `dist/` to a lamp and verifies every file.
-- `build.py` also stamps a version (a short hash of the sources plus the build date) into both pages and writes `dist/version.json`, which **Settings → Software** reads from GitHub to offer updates. To try an update on a lamp without GitHub, run `python3 tools/serve_dist.py --test` (it serves a build that differs only in its version, with CORS) and open the printed `http://LAMP-ADDRESS/setup.htm?updsrc=…` address and confirm; `?updsrc=` goes back to GitHub. For safety, updates are only accepted from this repository or from an address on the home network, and `?host=` works only on a page opened from a file or a local server.
+- `build.py` also stamps a version (a short hash of the sources plus the build date) into both pages and writes `dist/version.json`, which **Settings → Firmware** reads from GitHub to offer updates. To try an update on a lamp without GitHub, run `python3 tools/serve_dist.py --test` (it serves a build that differs only in its version, with CORS) and open the printed `http://LAMP-ADDRESS/setup.htm?updsrc=…` address and confirm; `?updsrc=` goes back to GitHub. For safety, updates are only accepted from this repository or from an address on the home network, and `?host=` works only on a page opened from a file or a local server.
 
 ## Files
 
