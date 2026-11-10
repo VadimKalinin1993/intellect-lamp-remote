@@ -1,12 +1,12 @@
 {
- "v": "b9dda308",
- "date": "2026-11-09",
+ "v": "796b6893",
+ "date": "2026-11-10",
  "files": {
-  "app.htm": 24089,
+  "app.htm": 24678,
   "icon.png": 4831,
   "index.htm": 191,
-  "setup.htm": 37652,
-  "lang-ru.json.gz": 13119,
-  "lang-uk.json.gz": 13125
+  "setup.htm": 37848,
+  "lang-ru.json.gz": 13057,
+  "lang-uk.json.gz": 13062
  }
 }

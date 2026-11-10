@@ -10,10 +10,10 @@
 
 - **On/off**: tap the big orb. It shows the lamp's live colors in real time.
 - **Brightness**: one large slider; tap or drag anywhere on it.
-- **Colors**: 12 ready-made colors (warm whites plus soft tones), and a color wheel under **Custom** for saving your own.
+- **Colors**: 12 ready-made colors (warm whites plus soft tones), and a color wheel under **Custom** for saving your own. Saved colors are kept on the lamp, so every phone sees them.
 - **Scenes**: 10 calm, pre-tuned animations made for a diffused lamp: Candle, Embers, Breathe, Ocean, Aurora, Sunset, Lagoon, Fireflies, Pastel and Spectrum. Each scene has its own speed and intensity sliders. The full list of WLED effects is still there under **All WLED effects**.
 - **Sleep timer**: the lamp fades out over 3, 5, 15, 30 or 60 minutes, with a countdown at the top.
-- **Settings**: Wi‑Fi, a backup access point, schedules, Siri and more, in plain words (see [Settings](#settings)).
+- **Settings**: what the lamp does when power comes on, a wake-up alarm, Wi‑Fi, a backup access point, Siri and more, in plain words (see [Settings](#settings)).
 - **Home Screen app**: has its own icon and opens full screen, like a native app.
 
 Nothing is sent to the internet. The app talks only to your lamp, over your home network. (Two exceptions, both downloads from this page: installing a [language](#languages), and a check for a new version once a day, which you can switch off in **Settings → Maintenance**. Nothing about your lamp is sent.)
@@ -73,13 +73,13 @@ Now it opens like a regular app, with its own icon.
 
 Anyone on the same Wi‑Fi can open `http://LAMP-ADDRESS/app.htm` on their own phone and add it to their Home Screen. You all control the same lamp and see the same state: on/off, brightness, color, scene and timer.
 
-Saved custom colors and the language are kept per device, in that phone's browser.
+Saved custom colors are kept on the lamp (in `colors.json`), so they're the same on every phone. The language is chosen on each phone.
 
 ## Settings
 
 Tap **Settings** at the top of the remote. Everyday things come first, in plain words, grouped without headings:
 
-- **Behavior** (power on, color changes and the schedule), **Sync with other lamps**, **Smart home & Siri** (ready-made Siri Shortcuts addresses for on/off, brightness, your colors and scenes, plus Alexa, Philips Hue and MQTT);
+- **When power comes on** (wait to be turned on, or light up as before or with a color or scene you choose), **Alarm** (the lamp lights up at a set time and days, fading in over a minute), **Sync with other lamps**, **Smart home & Siri** (ready-made Siri Shortcuts addresses for on/off, brightness, your colors and scenes, plus Alexa, Philips Hue and MQTT);
 - **Wi‑Fi** (the backup access point is inside it, see below), **Language**, **Lamp name**, **Maintenance** (updates, backup of settings and scenes, restart);
 - **Other**, folded away under a button: hardware (LEDs, wiring and the power supply limit), WLED's built-in sleep timer, light shows, WLED firmware, security and the classic WLED pages.
 
@@ -132,7 +132,7 @@ After this, updates come straight from the phone: **Settings → Maintenance →
 
 ## Removing
 
-Open `http://LAMP-ADDRESS/edit`, right-click `app.htm` (and `icon.png`, `setup.htm`, `index.htm`, `lang-*.json.gz`) in the file list, and choose **Delete**. The lamp is back to exactly how it was, except for any settings you changed, which stay as if you'd changed them on the stock pages. The stock WLED interface at `http://LAMP-ADDRESS/` is never changed (unless you uploaded the optional `index.htm`), so you can use it at any time.
+Open `http://LAMP-ADDRESS/edit`, right-click `app.htm` (and `icon.png`, `setup.htm`, `index.htm`, `lang-*.json.gz`, `colors.json`) in the file list, and choose **Delete**. The lamp is back to exactly how it was, except for any settings you changed, which stay as if you'd changed them on the stock pages. The stock WLED interface at `http://LAMP-ADDRESS/` is never changed (unless you uploaded the optional `index.htm`), so you can use it at any time.
 
 ## Troubleshooting
 

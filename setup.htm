@@ -242,6 +242,7 @@ sos:'M12 3a9 9 0 1 0 0 18 9 9 0 1 0 0-18M12 8a4 4 0 1 0 0 8 4 4 0 1 0 0-8M5.6 5.
 tag:'M4 4h7l9 9-7 7-9-9zM8.5 8.5h.01',pow:'M12 3v8M6.4 6.8a8 8 0 1 0 11.2 0',
 moon:'M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z',bolt:'M13 3 5 14h6l-1 7 8-11h-6z',
 clock:'M12 3a9 9 0 1 0 0 18 9 9 0 1 0 0-18M12 7v5l3 2',
+alarm:'M12 6a7 7 0 1 0 0 14 7 7 0 1 0 0-14M12 9.5V13l2.2 1.6M3.5 6.5 6.8 3.6M20.5 6.5l-3.3-2.9M7 19.5l-1.5 1.5M17 19.5l1.5 1.5',plug:'M9 3v5M15 3v5M6.5 8h11v3.5a5.5 5.5 0 0 1-11 0zM12 17v4',
 box:'M4 5h16v4H4zM6 9v10h12V9M10 13h4',up:'M12 4v11M7.5 10.5 12 15l4.5-4.5M5 19h14',
 chip:'M7 7h10v10H7zM10 3v4M14 3v4M10 17v4M14 17v4M3 10h4M3 14h4M17 10h4M17 14h4',
 link:'M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1',
@@ -339,7 +340,8 @@ const myLang=()=>st('lang')||'';
 let LF=null;
 const RB='Saving restarts the lamp, about 15 seconds.';
 const V={
-behavior:{t:'Behavior',s:'Power on, schedule',ic:'clock',own:1},
+power:{t:'When power comes on',ic:'plug',own:1},
+alarm:{t:'Alarm',ic:'alarm',own:1},
 lang:{t:'Language',ic:'globe',v:()=>LANGS.find(l=>l[0]==myLang())[1],own:1},
 wifi:{t:'Wi‑Fi',ic:'wifi',s:c=>get(c,'nw.ins.0.ssid')||'Not set',
  d:'Change this when you get a new router or a new Wi‑Fi password. The lamp can only join 2.4 GHz networks.',
@@ -362,7 +364,7 @@ name:{t:'Lamp name',ic:'tag',v:c=>c.id.name.trim(),d:'The name you see on your r
 nightlight:{t:'Built‑in sleep timer',ic:'moon',d:'Used by the WLED app, a button on the lamp and Home Assistant. The remote’s Sleep timer sets its own length.',
  f:[['r','light.nl.mode','When the time is up',0,[[0,'Turn off at once'],[1,'Fade out slowly'],[2,'Fade to another color'],[3,'Sunrise','Gets brighter instead. Use it as a wake‑up light.']]],
  ['n','light.nl.dur','Length',0,{min:1,max:255,u:'min'}],['sl','light.nl.tbri','Brightness at the end','0% means the lamp turns off.',{min:0,max:255,f:pc}]]},
-time:{t:'Time',ic:'clock',v:c=>c.if.ntp.en?'':'Off',d:'The lamp takes the time from the internet and from your phone. Schedules need it.',
+time:{t:'Time',ic:'clock',v:c=>c.if.ntp.en?'':'Off',d:'The lamp takes the time from the internet and from your phone. Alarms need it.',
  f:[['sw','if.ntp.en','Keep time','Asks a public time server for the current time.'],['s','if.ntp.tz','Time zone',0,TZ],
  ['g','Time server'],['in','if.ntp.host','Server','Change only if your network blocks the default one.',{max:32}]]},
 care:{t:'Maintenance',s:'Updates, backup, restart',ic:'tool',v:()=>newer()?'Update available':'',
@@ -417,7 +419,7 @@ live:{t:'Light shows',ic:'live',
 sec:{t:'Security',ic:'lock',d:'Anyone on your Wi‑Fi can control and set up the lamp: WLED has no login. Keep the lamp off guest networks and never expose it to the internet.',
  f:[['sw','ota.aota','Developer updates','Allows ArduinoOTA uploads from a computer. Turn off if you don’t use them.'],
  ['x','Update lock and factory reset','A lock password and a full reset live on the classic WLED page.',()=>`<a class="btn" href="http://${HOST}/settings/sec">Open</a>`]]}};
-const GROUPS=[['behavior','sync','smart'],['wifi','lang','name','care']],ADV=['hardware','time','nightlight','live','firmware','sec'];
+const GROUPS=[['power','alarm','sync','smart'],['wifi','lang','name','care']],ADV=['hardware','time','nightlight','live','firmware','sec'];
 let advOpen=false;
 
 /* ---------- small builders ---------- */
@@ -462,13 +464,16 @@ function timers(){
   return (rows.join('')||`<div class="f"><span class="h">No timers yet.</span></div>`)+(T.length<8?`<div class="f"><button class="btn add" data-k="addT">Add a timer</button></div>`:'');
 }
 
-/* ---------- Behavior: power on, color changes, schedule (one page) ----------
-   The remote's colors and scenes live in the remote, not on the lamp. So what this page sets up is kept on the
+/* ---------- When power comes on, and Alarm (two pages, one store) ----------
+   The remote's colors and scenes live in the remote, not on the lamp. So what these pages set up is kept on the
    lamp as WLED presets in a reserved range: 250 the last light (the remote keeps it up to date), 249 the light
-   chosen for power on, 240-247 the schedule's timers. Each one carries rm:{...} so this page can show what's in
-   it. They're written into presets.json in one upload (nothing lights up while saving). */
+   chosen for power on, 240-247 the alarms (WLED timers). Each one carries rm:{...} so these pages can show what's
+   in it. They're written into presets.json in one upload (nothing lights up while saving).
+   An alarm that turns the light on fades it in over a minute (tt: a one-time transition, in 0.1 s). WLED only
+   fades while its transitions are on, so saving such an alarm keeps them on (smooth, 0.7 s: there's no
+   setting for it any more). */
 const P_LAST=250,P_BOOT=249,P_TIMER=240;
-let PJ={},BH=null,BHD=new Set(),bhOpen=-1;const FMT={};
+let PJ={},PJL=0,BH=null,BHD=new Set(),bhOpen=-1;const FMT={};
 const isOurs=id=>id==P_LAST||id==P_BOOT||(id>=P_TIMER&&id<P_TIMER+8);
 function whatOf(id){const p=PJ[id];if(p&&p.rm)return Object.assign({a:p.bri||200},p.rm);if(id&&p)return{t:'wled',id,n:p.n||'#'+id};return{t:'c',n:'Candle',c:COLS[0][1],a:150}}
 function bhInit(){if(BH)return;const d=D.def||{};
@@ -494,22 +499,27 @@ function timerRow(t,i){const w=BH.timers[i]||whatOf(t.macro);
   if(bhOpen!=i)return `<button class="opt tmr" data-bh="open" data-i="${i}"><b class="tt">${hm(t)}</b><span class="tx"><span class="t">${esc(nameOf(w))}</span><span class="s">${daysOf(t.dow)}${t.en?'':', '+(window.T||String)('paused')}</span></span>${svg('chev','chev')}</button>`;
   return `<div class="f tedit"><div class="fr"><input class="inp tm" type="time" value="${hm(t)}" data-bh="time" data-i="${i}" aria-label="Time"><button class="link" data-bh="close">Done</button></div>
   <div class="days">${DN.map((d,j)=>`<button class="day" aria-label="${d}" aria-pressed="${!!(t.dow>>j&1)}" data-bh="day" data-i="${i}" data-v="${j}">${dayL(j)}</button>`).join('')}</div></div>`+
-  chooser('t'+i,w,1)+`<div class="f"><button class="link del" data-bh="del" data-i="${i}">Delete timer</button></div>`}
-function behavior(){bhInit();if(!FXL)fxl();
-  const d=D.def||{},tr=get(D,'light.tr')||{},on=!!d.on,sm=!!tr.mode,T=tl();
-  return `<h1>Behavior</h1>
-  <div class="sub">When power comes on</div><div class="list"><div class="f">${bseg('pw',on?'on':'wait',[['wait','Wait to be turned on'],['on','Turn the light on']])}</div></div>`+
-  (on?`<div class="list nest">${bopt('pm','last',BH.mode,'As it was before')}${bopt('pm','pick',BH.mode,'A color or scene I choose')}${BH.mode=='pick'?chooser('boot',BH.boot,0):''}</div>${BH.mode?'':'<span class="h">Right now the lamp starts with WLED’s default light.</span>'}`:'')+
-  `<div class="sub">Color and brightness change</div><div class="list"><div class="f">${bseg('tr',sm?'1':'0',[['0','Instant'],['1','Smooth']])}</div>${sm?bsl('Change speed','trd',51-Math.min(50,Math.max(1,tr.dur|0)),1,50,v=>((51-v)/10).toFixed(1)+' s'):''}</div>
-  <div class="sub">Schedule</div><div class="list">${T.map(timerRow).join('')}${T.length<8?`<button class="opt add2" data-bh="add"><span class="plus">+</span><span class="tx"><span class="t">Add</span></span></button>`:''}</div>
-  <span class="h">Time is synced with your phone.</span>`}
+  chooser('t'+i,w,1)+`<div class="f"><button class="link del" data-bh="del" data-i="${i}">Delete alarm</button></div>`}
+function power(){bhInit();if(!FXL)fxl();
+  const on=!!(D.def||{}).on;
+  return `<h1>When power comes on</h1>
+  <div class="list" style="margin-top:18px"><div class="f">${bseg('pw',on?'on':'wait',[['wait','Wait to be turned on'],['on','Turn the light on']])}</div></div>`+
+  (on?`<div class="list nest">${bopt('pm','last',BH.mode,'As it was before')}${bopt('pm','pick',BH.mode,'A color or scene I choose')}${BH.mode=='pick'?chooser('boot',BH.boot,0):''}</div>${BH.mode?'':'<span class="h">Right now the lamp starts with WLED’s default light.</span>'}`:'')}
+function alarms(){bhInit();if(!FXL)fxl();bhFix();const T=tl();
+  return `<h1>Alarm</h1>
+  <div class="list" style="margin-top:18px">${T.map(timerRow).join('')}${T.length<8?`<button class="opt add2" data-bh="add"><span class="plus">+</span><span class="tx"><span class="t">Add</span></span></button>`:''}</div>
+  <span class="h">The light comes up slowly, over a minute. Time is synced with your phone.</span>`}
+/* alarms saved before the fade-in existed: write them again once, quietly */
+let bhFixed=0;
+function bhFix(){if(bhFixed||DEMO||!PJL)return;bhFixed=1;let n=0;
+  tl().forEach((t,j)=>{const p=PJ[t.macro];if(t.macro==P_TIMER+j&&p&&p.rm&&p.on&&p.tt==null){BHD.add('t'+j);n++}});
+  if(n)setTimeout(()=>save(1,1),300)}
 function setTimers(T){put(D,'timers.ins',T.concat((get(D,'timers.ins')||[]).filter(x=>x.hour==255)));mark('timers.ins')}
 document.addEventListener('click',e=>{const b=e.target.closest('[data-bh]');if(!b||b.tagName=='INPUT')return;bhInit();
   const k=b.dataset.bh,v=b.dataset.v,i=+b.dataset.i,T=tl(),W=key=>key=='boot'?BH.boot:BH.timers[+key.slice(1)];
   if(k=='pw'){set('def.on',v=='on');if(v=='on'&&!BH.mode){BH.mode='last';set('def.ps',P_LAST);bhDirty('last')}}
   else if(k=='pm'){BH.mode=v;set('def.ps',v=='last'?P_LAST:P_BOOT);bhDirty(v=='last'?'last':'boot')}
-  else if(k=='tr'){const cur=get(D,'light.tr.mode');set('light.tr.mode',typeof cur=='number'?+v:!!+v);if(+v&&!(get(D,'light.tr.dur')>0))set('light.tr.dur',7)}
-  else if(k=='add'){T.push({en:1,hour:20,min:0,macro:P_TIMER+T.length,dow:127});BH.timers.push({t:'c',n:'Candle',c:COLS[0][1],a:150});setTimers(T);bhOpen=T.length-1;bhDirty('t'+bhOpen)}
+  else if(k=='add'){T.push({en:1,hour:7,min:0,macro:P_TIMER+T.length,dow:31});BH.timers.push({t:'c',n:'Warm',c:COLS[1][1],a:200});setTimers(T);bhOpen=T.length-1;bhDirty('t'+bhOpen)}
   else if(k=='open'){bhOpen=i}else if(k=='close'){bhOpen=-1}
   else if(k=='del'){T.splice(i,1);BH.timers.splice(i,1);T.forEach((t,j)=>{if(isOurs(t.macro)||t.macro==P_TIMER+j+1)t.macro=P_TIMER+j});setTimers(T);T.forEach((t,j)=>bhDirty('t'+j));bhOpen=-1;if(!T.length)bar()}
   else if(k=='day'){const x=T[i],j=+v;x.dow^=1<<j;if(!x.dow)x.dow^=1<<j;setTimers(T)}
@@ -520,15 +530,14 @@ document.addEventListener('click',e=>{const b=e.target.closest('[data-bh]');if(!
   else return;
   const y=scrollY;render();scrollTo(0,y)});
 document.addEventListener('input',e=>{const t=e.target,k=t.dataset.bs;if(!k)return;const v=+t.value;setRange(t,v);$('#bv-'+CSS.escape(k)).textContent=FMT[k](v);
-  if(k=='trd')return set('light.tr.dur',51-v);
   const key=k.slice(2),w=key=='boot'?BH.boot:BH.timers[+key.slice(1)];w.a=v;bhDirty(key)});
 document.addEventListener('change',e=>{const t=e.target;if(t.dataset.bh!='time')return;const [h,m]=t.value.split(':');if(h==null)return;const T=tl(),x=T[+t.dataset.i];x.hour=+h;x.min=+m;setTimers(T)});
-/* what a preset holds for a color, a scene or "turn off" */
-function pjson(w){if(w.t=='off')return{on:false,rm:{t:'off'}};if(w.t=='wled')return null;const a=w.a||200;
-  if(w.t=='c')return{on:true,bri:a,seg:[{id:0,fx:0,pal:0,col:[w.c,[0,0,0],[0,0,0]]}],rm:{t:'c',n:w.n,c:w.c}};
+/* what a preset holds for a color, a scene or "turn off"; fade: an alarm's minute-long fade-in */
+function pjson(w,fade){if(w.t=='off')return{on:false,rm:{t:'off'}};if(w.t=='wled')return null;const a=w.a||200,f=fade?{tt:600}:{};
+  if(w.t=='c')return Object.assign({on:true,bri:a},f,{seg:[{id:0,fx:0,pal:0,col:[w.c,[0,0,0],[0,0,0]]}],rm:{t:'c',n:w.n,c:w.c}});
   const x=FXS&&FXS.find(s=>s.k==w.s);if(!x||!FXN)return null;
   const g={id:0,fx:FXN[0].indexOf(x.fx),sx:x.sx,ix:x.ix,pal:Math.max(0,FXN[1].indexOf(x.pal||'Default')),c1:128,c2:128,c3:16};if(x.col)g.col=x.col;
-  return{on:true,bri:a,seg:[g],rm:{t:'s',s:x.k}}}
+  return Object.assign({on:true,bri:a},f,{seg:[g],rm:{t:'s',s:x.k}})}
 /* the phone's time zone as one of WLED's (by its winter and summer offsets); null when there's no match */
 function phoneTz(){const y=new Date().getFullYear(),o=m=>-new Date(y,m,1).getTimezoneOffset(),a=Math.min(o(0),o(6)),b=Math.max(o(0),o(6));
   const M={'0,0':0,'0,60':1,'60,120':2,'120,180':3,'-300,-240':4,'-360,-300':5,'-420,-360':6,'-420,-420':7,'-480,-420':8,'480,480':9,'540,540':10,'600,660':11,'720,780':12,'510,510':13,'330,330':14,'-360,-360':15,'570,570':16,'570,630':17,'-600,-600':18,'420,420':19,'-540,-480':20};
@@ -536,13 +545,14 @@ function phoneTz(){const y=new Date().getFullYear(),o=m=>-new Date(y,m,1).getTim
 async function bhSave(){if(!BHD.size&&!changed.has('timers.ins'))return;bhInit();
   const T=tl();T.forEach((t,j)=>{const w=BH.timers[j];if(w&&w.t!='wled'&&t.macro!=P_TIMER+j){t.macro=P_TIMER+j;BHD.add('t'+j)}});setTimers(T);
   if(T.length){if(!get(D,'if.ntp.en'))set('if.ntp.en',true);const z=phoneTz();if(z!=null&&get(D,'if.ntp.tz')!=z)set('if.ntp.tz',z)}
+  if(T.some((t,j)=>BH.timers[j]&&(BH.timers[j].t=='c'||BH.timers[j].t=='s'))&&!get(D,'light.tr.mode')){const m=get(D,'light.tr.mode');set('light.tr.mode',typeof m=='number'?1:true);set('light.tr.dur',7)}
   if(!BHD.size)return;
   const P=DEMO?clone(PJ):await getJ('/presets.json'),put2=(id,n,o)=>{if(o)P[id]=Object.assign({n},o)};
   for(const k of BHD){
     if(k=='boot')put2(P_BOOT,'Remote: power on',pjson(BH.boot));
     else if(k=='last'){if(!P[P_LAST]){const st=DEMO?{}:await getJ('/json/state'),g=(st.seg||[])[0]||{};
       P[P_LAST]={n:'Remote: last light',on:true,bri:st.bri||200,seg:[{id:0,fx:g.fx||0,sx:g.sx,ix:g.ix,pal:g.pal||0,col:g.col||[[255,180,100]],c1:g.c1,c2:g.c2,c3:g.c3}]}}}
-    else{const j=+k.slice(1);if(j<T.length)put2(P_TIMER+j,'Remote: timer '+(j+1),pjson(BH.timers[j]))}}
+    else{const j=+k.slice(1);if(j<T.length)put2(P_TIMER+j,'Remote: alarm '+(j+1),pjson(BH.timers[j],1))}}
   for(let j=T.length;j<8;j++)if(P[P_TIMER+j]&&P[P_TIMER+j].rm)delete P[P_TIMER+j];
   if(!DEMO){await upload(new Blob([JSON.stringify(P)],{type:'application/json'}),'/presets.json','/upload','data');await post('/json/state',{time:Math.floor(Date.now()/1000)})}
   PJ=P;PS=Object.keys(P).filter(k=>+k&&P[k].n).map(k=>[+k,P[k].n])}
@@ -680,12 +690,12 @@ function joined(){
 
 function render(){
   const m=$('#main');
-  view=(location.hash.slice(1)||qs.get('view')||'').replace(/[^a-z]/g,'');if(view=='home')view='';else if(!view&&HOST=='4.3.2.1'&&!DEMO)view='recovery';
+  view=(location.hash.slice(1)||qs.get('view')||'').replace(/[^a-z]/g,'');if(view=='home')view='';else if(view=='behavior')view='power';else if(!view&&HOST=='4.3.2.1'&&!DEMO)view='recovery';
   if(!C){m.innerHTML=`<h1>Settings</h1><div class="list" style="margin-top:22px">${'<div class="sk"></div>'.repeat(5)}</div>`;return}
   const inSec=V[view];if(ADV.includes(view))advOpen=true;
   $('#backT').textContent=inSec||view=='joined'?'Settings':'Lamp';
   $('#back').href=inSec||view=='joined'?'#home':('app.htm'+(QHOST?'?host='+encodeURIComponent(HOST):''));
-  m.innerHTML=`<div class="view">${view=='recovery'?recovery():view=='joined'?joined():view=='lang'?language():view=='behavior'?behavior():inSec?section(view):'<h1>Settings</h1>'+home()}</div>`;
+  m.innerHTML=`<div class="view">${view=='recovery'?recovery():view=='joined'?joined():view=='lang'?language():view=='power'?power():view=='alarm'?alarms():inSec?section(view):'<h1>Settings</h1>'+home()}</div>`;
   document.title=(window.T||String)(inSec?V[view].t:'Lamp settings');
   m.querySelectorAll('.range').forEach(enh);
   bar();
@@ -718,7 +728,7 @@ function bar(){
   asT=setTimeout(()=>save(1),[...changed].some(p=>/^(hw|id\.mdns|wifi)/.test(p))?1500:700);
 }
 document.addEventListener('focusout',e=>{if(e.target.matches&&e.target.matches('input'))setTimeout(bar,0)});
-async function save(auto){
+async function save(auto,quiet){
   if(saving){saving=2;return}saving=1;
   const b=$('#save'),held=auto?[...changed].filter(p=>p.startsWith('nw.')):[];held.forEach(p=>changed.delete(p));
   if(!auto){b.disabled=true;b.textContent='Connecting…'}
@@ -727,8 +737,8 @@ async function save(auto){
     if(Object.keys(o).length){const r=await post('/json/cfg',o);if(!r.ok)throw r}
     for(const p of changed)if(/psk$/.test(p)){put(D,p.replace(/psk$/,'pskl'),(get(D,p)||'').length);put(D,p,undefined)}
     for(const p of changed)put(C,p,clone(get(D,p)));for(const p of ['timers.ins','def','light.tr','if.ntp'])put(C,p,clone(get(D,p)));
-    changed.clear();BHD.clear();ok=1;toast(rb?'Saved. The lamp is restarting…':'Saved');
-  }catch(e){toast('Couldn’t save. Is the lamp still on your Wi‑Fi?')}
+    changed.clear();BHD.clear();ok=1;if(!quiet||rb)toast(rb?'Saved. The lamp is restarting…':'Saved');
+  }catch(e){if(!quiet)toast('Couldn’t save. Is the lamp still on your Wi‑Fi?')}
   held.forEach(p=>changed.add(p));
   if(!auto){b.disabled=false;b.textContent='Connect';if(ok)render()}
   const again=saving==2;saving=0;if(again||ok&&changed.size)bar();
@@ -797,7 +807,7 @@ async function load(){
   try{I=await getJ('/json/info');C=await getJ('/json/cfg');D=clone(C);conn(1,DEMO?'Demo':'Connected');
     render();
     try{const s=await getJ('/json/state'),c=s.seg&&s.seg[0]&&s.seg[0].col[0];if(c&&s.on&&!ACC)document.documentElement.style.setProperty('--lamp',c.slice(0,3).join(','))}catch(e){}
-    try{const p=await getJ('/presets.json');PJ=p;PS=Object.keys(p).filter(k=>+k&&p[k].n).map(k=>[+k,p[k].n]);if(view&&V[view])render()}catch(e){}
+    try{const p=await getJ('/presets.json');PJ=p;PJL=1;if(!BHD.size)BH=null;PS=Object.keys(p).filter(k=>+k&&p[k].n).map(k=>[+k,p[k].n]);if(view&&V[view])render()}catch(e){}
     loaded();
     const ed=qs.get('edit');if(ed){const [p,v]=ed.split(':');set(p,isNaN(v)?v:+v);render()}
     /* once a day, after the lamp has answered: never competes with loading it */

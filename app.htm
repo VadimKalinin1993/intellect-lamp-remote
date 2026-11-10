@@ -501,6 +501,8 @@ async function poll(){
 document.addEventListener('visibilitychange', () => {
   if(ws && ws.readyState===1) ws.send(document.hidden?'{"lv":false}':'{"lv":true}');
   if(!document.hidden && !wsOk) poll();
+  /* another phone may have saved or deleted a color meanwhile */
+  if(!document.hidden && Date.now()-mycAt > 5000) setTimeout(loadColors, 600);
 });
 
 /* ---------- live LED view → orb ---------- */
@@ -754,7 +756,50 @@ function setColor(rgb, final){
 }
 /* colour tiles: built-in colours + your saved ones + the Custom tile that opens the wheel */
 const lum = c => .2126*c[0]+.7152*c[1]+.0722*c[2];
-function savedColors(){ return store.get('saved',[]).filter(c=>Array.isArray(c) && c.length===3); }
+/* your colors are kept on the lamp, in colors.json, so every phone that opens this lamp shows the same ones.
+   Each change reads the file again first, so two phones saving at once keep each other's colors. This phone
+   keeps a copy only to draw the tiles at once on start. Colors saved on a phone before (lamp.saved) move to
+   the lamp the first time it answers. */
+const MAXC = 15, MYF = '/colors.json';
+const okC = c => Array.isArray(c) && c.length===3 && c.every(v => Number.isInteger(v) && v>=0 && v<=255);
+const sameC = (a,b) => a.join()===b.join(), builtIn = c => COLORS.some(([,x]) => sameC(x,c));
+let MYC = store.get('colors@'+HOST,[]).filter(okC), mycAt = 0, mycBusy = false;
+function savedColors(){ return MYC; }
+function setMyc(l){ MYC = l; mycAt = Date.now(); store.set('colors@'+HOST, l); renderTiles(); }
+async function readColors(){
+  const r = await fetch(BASE+MYF, {cache:'no-store'});
+  if(r.status===404) return [];
+  if(!r.ok) throw new Error(r.status);
+  const j = await r.json().catch(()=>({}));
+  return (Array.isArray(j.colors) ? j.colors : []).filter(okC);
+}
+async function writeColors(l){
+  const fd = new FormData();
+  fd.append('data', new Blob([JSON.stringify({v:1, colors:l})], {type:'application/json'}), MYF);
+  const r = await fetch(BASE+'/upload', {method:'POST', body:fd});
+  if(!r.ok) throw new Error(r.status);
+}
+async function loadColors(){
+  if(mycBusy) return;
+  let l; try{ l = await readColors(); }catch(e){ return; }
+  const old = store.get('saved', null);
+  if(Array.isArray(old)){
+    const add = old.filter(okC).filter((c,i,a) => !builtIn(c) && !l.some(x=>sameC(x,c)) && a.findIndex(x=>sameC(x,c))===i);
+    if(add.length){ try{ l = l.concat(add).slice(-MAXC); await writeColors(l); }catch(e){ return; } }
+    try{ localStorage.removeItem('lamp.saved') }catch(e){}
+  }
+  setMyc(l);
+}
+/* fn gets the lamp's current list and returns the new one, or a message to show instead */
+async function editColors(fn, done){
+  if(mycBusy) return; mycBusy = true;
+  try{
+    const l = fn(await readColors());
+    if(typeof l==='string'){ toast(l); return; }
+    await writeColors(l); setMyc(l); toast(done);
+  }catch(e){ toast('Couldn’t reach the lamp. Check that it’s on, then try again.'); }
+  finally{ mycBusy = false; }
+}
 function renderTiles(){
   const open = !$('#custom').hidden;
   const tile = (c, label, extra='') => `<div class="tw" style="--c:${c}"><svg class="ring" viewBox="0 0 200 100" preserveAspectRatio="none" aria-hidden="true"><use href="#sqp" fill="none" stroke="#fff" stroke-width="10"/><use href="#sqp" fill="none" stroke="var(--ink)" stroke-width="5"/></svg><button class="tile ${lum(c)>150?'lt':'dk'}" style="background:rgb(${c})" data-rgb="${c}" aria-pressed="false" aria-label="${label}">${extra}${label.startsWith('Saved')?'':`<span>${label}</span>`}</button></div>`;
@@ -779,7 +824,7 @@ function askDelete(i){
   const c = savedColors()[i]; if(!c) return;
   const m = $('#confirm');
   $('#confirmSw').style.background = `rgb(${c})`;
-  m.hidden = false; m.dataset.i = i;
+  m.hidden = false; m.dataset.c = c.join();
   $('#confirmYes').focus();
 }
 function closeConfirm(){ $('#confirm').hidden = true; }
@@ -787,14 +832,15 @@ $('#confirmNo').addEventListener('click', closeConfirm);
 $('#confirm').addEventListener('click', e => { if(e.target.id==='confirm') closeConfirm(); });
 document.addEventListener('keydown', e => { if(e.key==='Escape' && !$('#confirm').hidden) closeConfirm(); });
 $('#confirmYes').addEventListener('click', () => {
-  const r = savedColors(); r.splice(+$('#confirm').dataset.i, 1); store.set('saved', r);
-  closeConfirm(); renderTiles(); toast('Color deleted');
+  const c = $('#confirm').dataset.c;
+  closeConfirm();
+  editColors(l => l.filter(x => x.join()!==c), 'Color deleted');
 });
 $('#saveColor').addEventListener('click', () => {
   if(!S) return; const c = S.seg[0].col[0].slice(0,3);
-  const r = savedColors();
-  if(COLORS.some(([,x])=>x.join()===c.join()) || r.some(x=>x.join()===c.join())){ toast('This color is already in your colors'); return; }
-  r.push(c); store.set('saved', r.slice(-15)); renderTiles(); toast('Color saved');
+  const dup = 'This color is already in your colors';
+  if(builtIn(c) || MYC.some(x=>sameC(x,c))){ toast(dup); return; }
+  editColors(l => l.some(x=>sameC(x,c)) ? dup : l.concat([c]).slice(-MAXC), 'Color saved');
 });
 function markColorChips(c){ document.querySelectorAll('#tiles [data-rgb]').forEach(b=>b.setAttribute('aria-pressed', b.dataset.rgb===c.join(','))); }
 
@@ -985,6 +1031,7 @@ if(navigator.standalone) document.documentElement.classList.add('standalone');
     onInfo(j.info);
     try{ fxdata = await getJSON('/json/fxdata'); }catch(e){ fxdata=[]; }
     renderFx(); onState(j.state); setConn('ok','Connected');
+    await loadColors();
   }catch(e){
     setConn('bad','Offline');
   }
