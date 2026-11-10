@@ -135,7 +135,7 @@ background:linear-gradient(90deg,rgba(var(--lamp),.9) 0 calc(var(--pad)*2 + var(
 .opt.tmr .chev{margin-left:auto}
 .f.tedit .fr{gap:12px}
 .opt.tmr .chev{transition:transform .2s}.opt.tmr[aria-expanded=true] .chev{transform:rotate(90deg)}
-.f.ctr{display:flex;justify-content:center}.btn.del{color:var(--muted);padding:10px 18px}
+.f.ctr{display:flex;justify-content:center}.link.del{color:#f3a46b;padding:4px 0}
 .val.bad{color:#f3a46b;font-weight:600}
 .btn.wide{width:100%;padding:14px;font-size:16px;margin-top:16px}
 .btn:disabled{opacity:.5;cursor:default}
@@ -501,7 +501,7 @@ function timerRow(t,i){const w=BH.timers[i]||whatOf(t.macro),open=bhOpen==i;
   return `<div class="list grp"><button class="opt tmr" data-bh="open" data-i="${i}" aria-expanded="${open}"><b class="tt">${hm(t)}</b><span class="tx"><span class="t">${esc(nameOf(w))}</span><span class="s">${daysOf(t.dow)}${t.en?'':', '+(window.T||String)('paused')}</span></span>${svg('chev','chev')}</button>`+
   (open?`<div class="f tedit"><div class="fr"><span class="t">Time</span><input class="inp tm" type="time" value="${hm(t)}" data-bh="time" data-i="${i}" aria-label="Time"></div>
   <div class="days">${DN.map((d,j)=>`<button class="day" aria-label="${d}" aria-pressed="${!!(t.dow>>j&1)}" data-bh="day" data-i="${i}" data-v="${j}">${dayL(j)}</button>`).join('')}</div></div>`+
-  chooser('t'+i,w)+`<div class="f ctr"><button class="btn del" data-bh="del" data-i="${i}">Delete alarm</button></div>`:'')+'</div>'}
+  chooser('t'+i,w)+`<div class="f ctr"><button class="link del" data-bh="del" data-i="${i}">Delete alarm</button></div>`:'')+'</div>'}
 function power(){bhInit();if(!FXL)fxl();
   const on=!!(D.def||{}).on;
   return `<h1>When power comes on</h1>
