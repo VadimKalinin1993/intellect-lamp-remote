@@ -134,7 +134,8 @@ background:linear-gradient(90deg,rgba(var(--lamp),.9) 0 calc(var(--pad)*2 + var(
 .opt .plus{width:20px;text-align:center;font-size:20px;line-height:1;color:rgb(var(--lamp))}
 .opt.tmr .chev{margin-left:auto}
 .f.tedit .fr{gap:12px}
-.link.del{color:#f3a46b}
+.opt.tmr .chev{transition:transform .2s}.opt.tmr[aria-expanded=true] .chev{transform:rotate(90deg)}
+.f.ctr{display:flex;justify-content:center}.btn.del{color:var(--muted);padding:10px 18px}
 .val.bad{color:#f3a46b;font-weight:600}
 .btn.wide{width:100%;padding:14px;font-size:16px;margin-top:16px}
 .btn:disabled{opacity:.5;cursor:default}
@@ -488,27 +489,27 @@ const bseg=(k,cur,o)=>`<div class="seg" role="radiogroup">${o.map(([v,t])=>`<but
 const bopt=(k,v,cur,t)=>`<button class="opt" role="radio" aria-checked="${v==cur}" data-bh="${k}" data-v="${v}"><span class="r"></span><span class="tx"><span class="t">${t}</span></span></button>`;
 function bsl(label,key,v,min,max,fmt){FMT[key]=fmt;
   return `<div class="f"><div class="fr"><span class="t">${label}</span><span class="val" id="bv-${key}">${fmt(v)}</span></div><div class="slider" style="--k:${((v-min)/(max-min)).toFixed(4)}"><input class="range" type="range" aria-label="${label}" data-bs="${key}" min="${min}" max="${max}" value="${v}"><span class="knob"></span></div></div>`}
-/* what to light: a color or a scene of the remote (and, for timers, turning off) */
-function chooser(key,w,off){const kinds=[['c','Color'],['s','Scene']].concat(off?[['off','Turn off']]:[]),t=w.t=='wled'?'':w.t;
+/* what to light: a color or a scene of the remote. Alarms only turn the light on; "Turn off" shows only for an
+   alarm made by an older version that still turns the lamp off (until another choice replaces it). */
+function chooser(key,w){const kinds=[['c','Color'],['s','Scene']].concat(w.t=='off'?[['off','Turn off']]:[]),t=w.t=='wled'?'':w.t;
   return `<div class="f"><div class="seg" role="radiogroup" aria-label="What to light">${kinds.map(([v,n])=>`<button role="radio" aria-checked="${t==v}" data-bh="kind" data-k="${key}" data-v="${v}">${n}</button>`).join('')}</div>`+
   (w.t=='wled'?`<span class="h">${esc(w.n)}</span>`:'')+
   (t=='c'?`<div class="dots">${COLS.map(([n,c])=>`<button class="dot" style="background:${hex(c)}" aria-label="${n}" aria-pressed="${w.n==n}" data-bh="col" data-k="${key}" data-v="${n}"></button>`).join('')}</div>`:'')+
   (t=='s'?(FXL==2?`<div class="fxg" style="margin-top:10px">${FXS.map(x=>`<button class="fx" data-bh="sc" data-k="${key}" data-v="${x.k}" aria-pressed="${w.s==x.k}"><b>${x.n}</b></button>`).join('')}</div>`:FXL==3?`<span class="h">${NET}</span>`:'<div class="sk"></div>'):'')+
   `</div>`+(t=='c'||t=='s'?bsl('Brightness','a-'+key,w.a||200,1,255,pc):'')}
-function timerRow(t,i){const w=BH.timers[i]||whatOf(t.macro);
-  if(bhOpen!=i)return `<button class="opt tmr" data-bh="open" data-i="${i}"><b class="tt">${hm(t)}</b><span class="tx"><span class="t">${esc(nameOf(w))}</span><span class="s">${daysOf(t.dow)}${t.en?'':', '+(window.T||String)('paused')}</span></span>${svg('chev','chev')}</button>`;
-  return `<div class="f tedit"><div class="fr"><input class="inp tm" type="time" value="${hm(t)}" data-bh="time" data-i="${i}" aria-label="Time"><button class="link" data-bh="close">Done</button></div>
+function timerRow(t,i){const w=BH.timers[i]||whatOf(t.macro),open=bhOpen==i;
+  return `<div class="list grp"><button class="opt tmr" data-bh="open" data-i="${i}" aria-expanded="${open}"><b class="tt">${hm(t)}</b><span class="tx"><span class="t">${esc(nameOf(w))}</span><span class="s">${daysOf(t.dow)}${t.en?'':', '+(window.T||String)('paused')}</span></span>${svg('chev','chev')}</button>`+
+  (open?`<div class="f tedit"><div class="fr"><span class="t">Time</span><input class="inp tm" type="time" value="${hm(t)}" data-bh="time" data-i="${i}" aria-label="Time"></div>
   <div class="days">${DN.map((d,j)=>`<button class="day" aria-label="${d}" aria-pressed="${!!(t.dow>>j&1)}" data-bh="day" data-i="${i}" data-v="${j}">${dayL(j)}</button>`).join('')}</div></div>`+
-  chooser('t'+i,w,1)+`<div class="f"><button class="link del" data-bh="del" data-i="${i}">Delete alarm</button></div>`}
+  chooser('t'+i,w)+`<div class="f ctr"><button class="btn del" data-bh="del" data-i="${i}">Delete alarm</button></div>`:'')+'</div>'}
 function power(){bhInit();if(!FXL)fxl();
   const on=!!(D.def||{}).on;
   return `<h1>When power comes on</h1>
   <div class="list" style="margin-top:18px"><div class="f">${bseg('pw',on?'on':'wait',[['wait','Wait to be turned on'],['on','Turn the light on']])}</div></div>`+
-  (on?`<div class="list nest">${bopt('pm','last',BH.mode,'As it was before')}${bopt('pm','pick',BH.mode,'A color or scene I choose')}${BH.mode=='pick'?chooser('boot',BH.boot,0):''}</div>${BH.mode?'':'<span class="h">Right now the lamp starts with WLED’s default light.</span>'}`:'')}
+  (on?`<div class="list nest">${bopt('pm','last',BH.mode,'As it was before')}${bopt('pm','pick',BH.mode,'A color or scene I choose')}${BH.mode=='pick'?chooser('boot',BH.boot):''}</div>${BH.mode?'':'<span class="h">Right now the lamp starts with WLED’s default light.</span>'}`:'')}
 function alarms(){bhInit();if(!FXL)fxl();bhFix();const T=tl();
   return `<h1>Alarm</h1>
-  <div class="list" style="margin-top:18px">${T.map(timerRow).join('')}${T.length<8?`<button class="opt add2" data-bh="add"><span class="plus">+</span><span class="tx"><span class="t">Add</span></span></button>`:''}</div>
-  <span class="h">The light comes up slowly, over a minute. Time is synced with your phone.</span>`}
+  <p class="lead">The light comes up slowly, over a minute. Time is synced with your phone.</p>${T.map(timerRow).join('')}${T.length<8?`<div class="list grp"><button class="opt add2" data-bh="add"><span class="plus">+</span><span class="tx"><span class="t">Add</span></span></button></div>`:''}`}
 /* alarms saved before the fade-in existed: write them again once, quietly */
 let bhFixed=0;
 function bhFix(){if(bhFixed||DEMO||!PJL)return;bhFixed=1;let n=0;
@@ -520,7 +521,7 @@ document.addEventListener('click',e=>{const b=e.target.closest('[data-bh]');if(!
   if(k=='pw'){set('def.on',v=='on');if(v=='on'&&!BH.mode){BH.mode='last';set('def.ps',P_LAST);bhDirty('last')}}
   else if(k=='pm'){BH.mode=v;set('def.ps',v=='last'?P_LAST:P_BOOT);bhDirty(v=='last'?'last':'boot')}
   else if(k=='add'){T.push({en:1,hour:7,min:0,macro:P_TIMER+T.length,dow:31});BH.timers.push({t:'c',n:'Warm',c:COLS[1][1],a:200});setTimers(T);bhOpen=T.length-1;bhDirty('t'+bhOpen)}
-  else if(k=='open'){bhOpen=i}else if(k=='close'){bhOpen=-1}
+  else if(k=='open'){bhOpen=bhOpen==i?-1:i}
   else if(k=='del'){T.splice(i,1);BH.timers.splice(i,1);T.forEach((t,j)=>{if(isOurs(t.macro)||t.macro==P_TIMER+j+1)t.macro=P_TIMER+j});setTimers(T);T.forEach((t,j)=>bhDirty('t'+j));bhOpen=-1;if(!T.length)bar()}
   else if(k=='day'){const x=T[i],j=+v;x.dow^=1<<j;if(!x.dow)x.dow^=1<<j;setTimers(T)}
   else if(k=='kind'){const w=W(b.dataset.k),a=w.a||200;Object.keys(w).forEach(x=>delete w[x]);
